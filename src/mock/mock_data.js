@@ -221,32 +221,10 @@ export const mockData = {
           "url": "https://wuqianvc.top/",
           "description": "吴签磁力。",
           "icon": "https://www.faviconextractor.com/favicon/wuqianvc.top"
-        },
-        {
-          "id": "site-1775272414721",
-          "name": "JAVbus",
-          "url": "https://www.seedmm.bond/",
-          "description": "你懂得。",
-          "icon": "https://www.faviconextractor.com/favicon/www.seedmm.bond"
-        },
-        {
-          "id": "site-1775281221329",
-          "name": "搜书吧",
-          "url": "https://soushu2030.com",
-          "description": "网络小说下载。",
-          "icon": "https://www.faviconextractor.com/favicon/soushu2030.com"
-        },
-        {
-          "id": "site-1775281236498",
-          "name": "小草",
-          "url": "https://1024nba.org",
-          "description": "",
-          "icon": "https://www.faviconextractor.com/favicon/1024nba.org"
         }
       ]
     }
   ],
   "title": "琴心剑魄。",
-  "search": "bing",
-  "_fileSha": "888dce4004be3d1588a2436b9e2b7fd5db495c42"
+  "search": "bing"
 }
