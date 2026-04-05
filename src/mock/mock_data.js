@@ -26,6 +26,34 @@ export const mockData = {
           "url": "https://wx.mail.qq.com/?cancel_login=true&from=get_ticket_fail",
           "description": "",
           "icon": "https://www.faviconextractor.com/favicon/wx.mail.qq.com"
+        },
+        {
+          "id": "site-1775386914855",
+          "name": "文件快速分享",
+          "url": "http://4275.com/",
+          "description": "文件快速分享下载。",
+          "icon": "https://www.faviconextractor.com/favicon/4275.com"
+        },
+        {
+          "id": "site-1775387728825",
+          "name": "不死鸟",
+          "url": "https://iui.su/",
+          "description": "资源分享",
+          "icon": "https://www.faviconextractor.com/favicon/iui.su"
+        },
+        {
+          "id": "site-1775388125011",
+          "name": "导航站",
+          "url": "https://kf369.cn/",
+          "description": "很齐全的导航站，无聊时候看看。",
+          "icon": "https://www.faviconextractor.com/favicon/kf369.cn"
+        },
+        {
+          "id": "site-1775388275188",
+          "name": "装机小工具",
+          "url": "https://mefcl.lanzouw.com/b012oragb",
+          "description": "蓝奏盘 Windows 实用小软件合集，密码：8jfn",
+          "icon": "https://www.faviconextractor.com/favicon/mefcl.lanzouw.com"
         }
       ]
     },
@@ -62,6 +90,13 @@ export const mockData = {
           "url": "https://flac.music.hi.cn/",
           "description": "无损音乐下载",
           "icon": "https://www.faviconextractor.com/favicon/flac.music.hi.cn"
+        },
+        {
+          "id": "site-1775386967395",
+          "name": "泡椒音乐",
+          "url": "https://music.pjmp3.com/",
+          "description": "无损音乐下载，需其他音源",
+          "icon": "https://www.faviconextractor.com/favicon/music.pjmp3.com"
         }
       ]
     },
@@ -84,6 +119,20 @@ export const mockData = {
           "url": "https://www.lige.fit",
           "description": "Tvbox路线汇总",
           "icon": "https://www.faviconextractor.com/favicon/www.lige.fit"
+        },
+        {
+          "id": "site-1775387520772",
+          "name": "POM",
+          "url": "https://pomo.mom/",
+          "description": "4k资源下载。",
+          "icon": "https://www.faviconextractor.com/favicon/pomo.mom"
+        },
+        {
+          "id": "site-1775387645149",
+          "name": "Gaze",
+          "url": "https://gaze.run/",
+          "description": "在线观影，不提供下载",
+          "icon": "https://www.faviconextractor.com/favicon/gaze.run"
         }
       ]
     },
@@ -278,6 +327,13 @@ export const mockData = {
           "url": "https://miosou.cc/",
           "description": "秒搜鸭网盘资源搜索平台",
           "icon": "https://www.faviconextractor.com/favicon/miosou.cc"
+        },
+        {
+          "id": "site-1775387374717",
+          "name": "迅雷",
+          "url": "https://iui.su/3702/",
+          "description": "迅雷修复版",
+          "icon": "https://www.faviconextractor.com/favicon/iui.su"
         }
       ]
     },
