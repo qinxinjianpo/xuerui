@@ -97,6 +97,20 @@ export const mockData = {
           "url": "https://music.pjmp3.com/",
           "description": "无损音乐下载，需其他音源",
           "icon": "https://www.faviconextractor.com/favicon/music.pjmp3.com"
+        },
+        {
+          "id": "site-1777335737291",
+          "name": "GD音乐台",
+          "url": "https://music.gdstudio.org/",
+          "description": "一个小众的下载网站",
+          "icon": ""
+        },
+        {
+          "id": "site-1777335776659",
+          "name": "洛雪音源",
+          "url": "https://music.imwzh.com/",
+          "description": "",
+          "icon": "https://www.faviconextractor.com/favicon/music.imwzh.com"
         }
       ]
     },
@@ -356,6 +370,28 @@ export const mockData = {
           "url": "https://wuqianvc.top/",
           "description": "吴签磁力。",
           "icon": "https://www.faviconextractor.com/favicon/wuqianvc.top"
+        },
+        {
+          "id": "site-1777336433325",
+          "name": "BUS",
+          "url": "https://www.cdn--bus.cyou/",
+          "description": "",
+          "icon": ""
+        }
+      ]
+    },
+    {
+      "id": "category-1777335872754",
+      "icon": "🌐",
+      "name": "未来科技",
+      "order": 0,
+      "sites": [
+        {
+          "id": "site-1777335924433",
+          "name": "Deepseek",
+          "url": "https://www.deepseek.com/",
+          "description": "免费好用的语言大模型。",
+          "icon": "https://www.faviconextractor.com/favicon/www.deepseek.com"
         }
       ]
     }
