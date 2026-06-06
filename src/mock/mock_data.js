@@ -54,6 +54,20 @@ export const mockData = {
           "url": "https://mefcl.lanzouw.com/b012oragb",
           "description": "蓝奏盘 Windows 实用小软件合集，密码：8jfn",
           "icon": "https://www.faviconextractor.com/favicon/mefcl.lanzouw.com"
+        },
+        {
+          "id": "site-1775272547308",
+          "name": "Z-library",
+          "url": "https://zh.tku101.ru/",
+          "description": "世界上最大的电子图书馆。",
+          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
+        },
+        {
+          "id": "site-1780752157558",
+          "name": "临时",
+          "url": "https://haikuoshijie.cn/",
+          "description": "各种推荐",
+          "icon": "https://www.faviconextractor.com/favicon/haikuoshijie.cn"
         }
       ]
     },
@@ -151,10 +165,74 @@ export const mockData = {
       ]
     },
     {
+      "id": "category-1775272084261",
+      "icon": "📁",
+      "name": "下载资源",
+      "order": 3,
+      "sites": [
+        {
+          "id": "site-1775272127909",
+          "name": "小轩网盘",
+          "url": "https://flowus.cn/xiaoxuan529/share/b1b11a9d-7fcd-48a2-b961-7a76f53baf2b?code=AHU9MJ",
+          "description": "网盘资源汇总。",
+          "icon": "https://www.faviconextractor.com/favicon/flowus.cn"
+        },
+        {
+          "id": "site-1775272190147",
+          "name": "游戏下载",
+          "url": "https://www.gamer520.com/",
+          "description": "PC和主机游戏下载。",
+          "icon": "https://www.faviconextractor.com/favicon/www.gamer520.com"
+        },
+        {
+          "id": "site-1775384047825",
+          "name": "聚盘搜",
+          "url": "https://www.panso567.com/",
+          "description": "7大网盘聚合搜索。",
+          "icon": "https://www.faviconextractor.com/favicon/www.panso567.com"
+        },
+        {
+          "id": "site-1775281120003",
+          "name": "秒搜鸭",
+          "url": "https://miosou.cc/",
+          "description": "秒搜鸭网盘资源搜索平台",
+          "icon": "https://www.faviconextractor.com/favicon/miosou.cc"
+        },
+        {
+          "id": "site-1775387374717",
+          "name": "迅雷",
+          "url": "https://iui.su/3702/",
+          "description": "迅雷修复版",
+          "icon": "https://www.faviconextractor.com/favicon/iui.su"
+        },
+        {
+          "id": "site-1775272372014",
+          "name": "磁力下载",
+          "url": "https://wuqianvc.top/",
+          "description": "吴签磁力。",
+          "icon": "https://www.faviconextractor.com/favicon/wuqianvc.top"
+        },
+        {
+          "id": "site-1777336433325",
+          "name": "BUS",
+          "url": "https://www.cdn--bus.cyou/",
+          "description": "",
+          "icon": ""
+        },
+        {
+          "id": "site-1780753482656",
+          "name": "源仓库",
+          "url": "https://www.yck2026.top/",
+          "description": "源仓库",
+          "icon": "https://www.faviconextractor.com/favicon/www.yck2026.top"
+        }
+      ]
+    },
+    {
       "id": "cloud",
       "name": "代码学习",
       "icon": "☁️",
-      "order": 3,
+      "order": 4,
       "sites": [
         {
           "id": "github",
@@ -218,6 +296,13 @@ export const mockData = {
           "url": "https://www.cloudns.net/",
           "description": "免费二级域名注册，abrdns.com",
           "icon": "https://www.faviconextractor.com/favicon/www.cloudns.net"
+        },
+        {
+          "id": "site-1780753010009",
+          "name": "外网镜像站",
+          "url": "https://mirror.js.org/#/",
+          "description": "用得上的镜像站.谷歌、github",
+          "icon": "https://www.faviconextractor.com/favicon/mirror.js.org"
         }
       ]
     },
@@ -225,7 +310,7 @@ export const mockData = {
       "id": "category-1775272572539",
       "icon": "📊",
       "name": "义务教育",
-      "order": 4,
+      "order": 5,
       "sites": [
         {
           "id": "site-1775272653399",
@@ -247,7 +332,7 @@ export const mockData = {
       "id": "category-1775380230027",
       "icon": "🔧",
       "name": "办公学习",
-      "order": 5,
+      "order": 6,
       "sites": [
         {
           "id": "site-1775380616292",
@@ -290,6 +375,20 @@ export const mockData = {
           "url": "https://glyphy.io/",
           "description": "快速复制各类特殊字符、字体、表情。",
           "icon": "https://www.faviconextractor.com/favicon/glyphy.io"
+        },
+        {
+          "id": "site-1780752058903",
+          "name": "在线工具箱",
+          "url": "https://www.convry.com/",
+          "description": "全面的在线工具",
+          "icon": "https://www.faviconextractor.com/favicon/www.convry.com"
+        },
+        {
+          "id": "site-1780752121336",
+          "name": "PDFCraft",
+          "url": "https://pdfcraft.devtoolcafe.com/zh/",
+          "description": "专业的在线PDF工具",
+          "icon": "https://www.faviconextractor.com/favicon/pdfcraft.devtoolcafe.com"
         }
       ]
     },
@@ -297,7 +396,7 @@ export const mockData = {
       "id": "category-1775381237467",
       "icon": "🎨",
       "name": "有点意思",
-      "order": 6,
+      "order": 7,
       "sites": [
         {
           "id": "site-1775381288626",
@@ -305,78 +404,13 @@ export const mockData = {
           "url": "https://rainyscope.com/",
           "description": "有趣的雨天白噪音模拟，春夏秋冬。",
           "icon": "https://www.faviconextractor.com/favicon/rainyscope.com"
-        }
-      ]
-    },
-    {
-      "id": "category-1775272084261",
-      "icon": "📁",
-      "name": "资源下载",
-      "order": 7,
-      "sites": [
-        {
-          "id": "site-1775272127909",
-          "name": "小轩网盘",
-          "url": "https://flowus.cn/xiaoxuan529/share/b1b11a9d-7fcd-48a2-b961-7a76f53baf2b?code=AHU9MJ",
-          "description": "网盘资源汇总。",
-          "icon": "https://www.faviconextractor.com/favicon/flowus.cn"
         },
         {
-          "id": "site-1775272190147",
-          "name": "游戏下载",
-          "url": "https://www.gamer520.com/",
-          "description": "PC和主机游戏下载。",
-          "icon": "https://www.faviconextractor.com/favicon/www.gamer520.com"
-        },
-        {
-          "id": "site-1775384047825",
-          "name": "聚盘搜",
-          "url": "https://www.panso567.com/",
-          "description": "7大网盘聚合搜索。",
-          "icon": "https://www.faviconextractor.com/favicon/www.panso567.com"
-        },
-        {
-          "id": "site-1775281120003",
-          "name": "秒搜鸭",
-          "url": "https://miosou.cc/",
-          "description": "秒搜鸭网盘资源搜索平台",
-          "icon": "https://www.faviconextractor.com/favicon/miosou.cc"
-        },
-        {
-          "id": "site-1775387374717",
-          "name": "迅雷",
-          "url": "https://iui.su/3702/",
-          "description": "迅雷修复版",
-          "icon": "https://www.faviconextractor.com/favicon/iui.su"
-        }
-      ]
-    },
-    {
-      "id": "category-1775272312689",
-      "icon": "🌐",
-      "name": "网络无界",
-      "order": 8,
-      "sites": [
-        {
-          "id": "site-1775272547308",
-          "name": "Z-library",
-          "url": "https://zh.tku101.ru/",
-          "description": "世界上最大的电子图书馆。",
-          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
-        },
-        {
-          "id": "site-1775272372014",
-          "name": "磁力下载",
-          "url": "https://wuqianvc.top/",
-          "description": "吴签磁力。",
-          "icon": "https://www.faviconextractor.com/favicon/wuqianvc.top"
-        },
-        {
-          "id": "site-1777336433325",
-          "name": "BUS",
-          "url": "https://www.cdn--bus.cyou/",
-          "description": "",
-          "icon": ""
+          "id": "site-1780751123284",
+          "name": "泡泡白噪音",
+          "url": "https://www.ppbzy.com/",
+          "description": "专注与放松的白噪音",
+          "icon": "https://www.faviconextractor.com/favicon/www.ppbzy.com"
         }
       ]
     },
@@ -384,7 +418,7 @@ export const mockData = {
       "id": "category-1777335872754",
       "icon": "🌐",
       "name": "未来科技",
-      "order": 0,
+      "order": 9,
       "sites": [
         {
           "id": "site-1777335924433",
@@ -392,6 +426,21 @@ export const mockData = {
           "url": "https://www.deepseek.com/",
           "description": "免费好用的语言大模型。",
           "icon": "https://www.faviconextractor.com/favicon/www.deepseek.com"
+        }
+      ]
+    },
+    {
+      "id": "category-1780751961419",
+      "icon": "🔍",
+      "name": "生活常用",
+      "order": 0,
+      "sites": [
+        {
+          "id": "site-1780752011188",
+          "name": "药物说明书大全",
+          "url": "http://drug.ptger.cn/",
+          "description": "免费的药物说明书查询",
+          "icon": "https://www.faviconextractor.com/favicon/drug.ptger.cn"
         }
       ]
     }
