@@ -325,6 +325,27 @@ export const mockData = {
           "url": "https://paperme.toolooz.com/",
           "description": "稿纸设置打印。",
           "icon": "https://www.faviconextractor.com/favicon/paperme.toolooz.com"
+        },
+        {
+          "id": "site-1780754719848",
+          "name": "一对",
+          "url": "https://edui123.com/",
+          "description": "数学教学工具",
+          "icon": "https://www.faviconextractor.com/favicon/edui123.com"
+        },
+        {
+          "id": "site-1780754843036",
+          "name": "黄冈课堂",
+          "url": "http://www.hgkt.net/00jhzyk/zt6.htm",
+          "description": "黄冈题库",
+          "icon": "https://www.faviconextractor.com/favicon/www.hgkt.net"
+        },
+        {
+          "id": "site-1780755052894",
+          "name": "计算型智能",
+          "url": "https://www.wolframalpha.com/",
+          "description": "关于数学的分步解答",
+          "icon": "https://www.faviconextractor.com/favicon/www.wolframalpha.com"
         }
       ]
     },
