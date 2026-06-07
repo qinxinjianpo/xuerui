@@ -14,13 +14,6 @@ export const mockData = {
           "icon": "https://www.faviconextractor.com/favicon/bbs.nga.cn"
         },
         {
-          "id": "site-1775272884113",
-          "name": "微信读书",
-          "url": "https://weread.qq.com/",
-          "description": "",
-          "icon": "https://www.faviconextractor.com/favicon/weread.qq.com"
-        },
-        {
           "id": "site-1775272855695",
           "name": "QQ邮箱",
           "url": "https://wx.mail.qq.com/?cancel_login=true&from=get_ticket_fail",
@@ -56,13 +49,6 @@ export const mockData = {
           "icon": "https://www.faviconextractor.com/favicon/mefcl.lanzouw.com"
         },
         {
-          "id": "site-1775272547308",
-          "name": "Z-library",
-          "url": "https://zh.tku101.ru/",
-          "description": "世界上最大的电子图书馆。",
-          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
-        },
-        {
           "id": "site-1780752157558",
           "name": "临时",
           "url": "https://haikuoshijie.cn/",
@@ -72,10 +58,39 @@ export const mockData = {
       ]
     },
     {
+      "id": "category-1780807732815",
+      "icon": "📱",
+      "name": "阅读资源",
+      "order": 1,
+      "sites": [
+        {
+          "id": "site-1780807815101",
+          "name": "知轩藏书备份",
+          "url": "https://zxcs.dmnb.cf/",
+          "description": "知轩藏书备份",
+          "icon": "https://www.faviconextractor.com/favicon/zxcs.dmnb.cf"
+        },
+        {
+          "id": "site-1775272547308",
+          "name": "Z-library",
+          "url": "https://zh.tku101.ru/",
+          "description": "世界上最大的电子图书馆。",
+          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
+        },
+        {
+          "id": "site-1775272884113",
+          "name": "微信读书",
+          "url": "https://weread.qq.com/",
+          "description": "",
+          "icon": "https://www.faviconextractor.com/favicon/weread.qq.com"
+        }
+      ]
+    },
+    {
       "id": "category-1775270594689",
       "icon": "🎵",
       "name": "音乐资源",
-      "order": 1,
+      "order": 2,
       "sites": [
         {
           "id": "site-1775270711257",
@@ -132,7 +147,7 @@ export const mockData = {
       "id": "category-1775281075542",
       "icon": "📱",
       "name": "影视资源",
-      "order": 2,
+      "order": 3,
       "sites": [
         {
           "id": "site-1775281142857",
@@ -168,7 +183,7 @@ export const mockData = {
       "id": "category-1775272084261",
       "icon": "📁",
       "name": "下载资源",
-      "order": 3,
+      "order": 4,
       "sites": [
         {
           "id": "site-1775272127909",
@@ -232,7 +247,7 @@ export const mockData = {
       "id": "cloud",
       "name": "代码学习",
       "icon": "☁️",
-      "order": 4,
+      "order": 5,
       "sites": [
         {
           "id": "github",
@@ -310,7 +325,7 @@ export const mockData = {
       "id": "category-1775272572539",
       "icon": "📊",
       "name": "义务教育",
-      "order": 5,
+      "order": 6,
       "sites": [
         {
           "id": "site-1775272653399",
@@ -353,7 +368,7 @@ export const mockData = {
       "id": "category-1775380230027",
       "icon": "🔧",
       "name": "办公学习",
-      "order": 6,
+      "order": 7,
       "sites": [
         {
           "id": "site-1775380616292",
@@ -417,7 +432,7 @@ export const mockData = {
       "id": "category-1775381237467",
       "icon": "🎨",
       "name": "有点意思",
-      "order": 7,
+      "order": 8,
       "sites": [
         {
           "id": "site-1775381288626",
@@ -447,6 +462,20 @@ export const mockData = {
           "url": "https://www.deepseek.com/",
           "description": "免费好用的语言大模型。",
           "icon": "https://www.faviconextractor.com/favicon/www.deepseek.com"
+        },
+        {
+          "id": "site-1780808655746",
+          "name": "千问",
+          "url": "https://www.qianwen.com/",
+          "description": "阿里千问",
+          "icon": "https://www.faviconextractor.com/favicon/www.qianwen.com"
+        },
+        {
+          "id": "site-1780808710785",
+          "name": "豆包",
+          "url": "https://www.doubao.com/",
+          "description": "",
+          "icon": ""
         }
       ]
     },
@@ -454,7 +483,7 @@ export const mockData = {
       "id": "category-1780751961419",
       "icon": "🔍",
       "name": "生活常用",
-      "order": 0,
+      "order": 10,
       "sites": [
         {
           "id": "site-1780752011188",
