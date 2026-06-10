@@ -35,25 +35,11 @@ export const mockData = {
           "icon": "https://www.faviconextractor.com/favicon/iui.su"
         },
         {
-          "id": "site-1775388125011",
-          "name": "导航站",
-          "url": "https://kf369.cn/",
-          "description": "很齐全的导航站，无聊时候看看。",
-          "icon": "https://www.faviconextractor.com/favicon/kf369.cn"
-        },
-        {
           "id": "site-1775388275188",
           "name": "装机小工具",
           "url": "https://mefcl.lanzouw.com/b012oragb",
           "description": "蓝奏盘 Windows 实用小软件合集，密码：8jfn",
           "icon": "https://www.faviconextractor.com/favicon/mefcl.lanzouw.com"
-        },
-        {
-          "id": "site-1780752157558",
-          "name": "临时",
-          "url": "https://haikuoshijie.cn/",
-          "description": "各种推荐",
-          "icon": "https://www.faviconextractor.com/favicon/haikuoshijie.cn"
         }
       ]
     },
@@ -347,13 +333,6 @@ export const mockData = {
           "url": "https://edui123.com/",
           "description": "数学教学工具",
           "icon": "https://www.faviconextractor.com/favicon/edui123.com"
-        },
-        {
-          "id": "site-1780754843036",
-          "name": "黄冈课堂",
-          "url": "http://www.hgkt.net/00jhzyk/zt6.htm",
-          "description": "黄冈题库",
-          "icon": "https://www.faviconextractor.com/favicon/www.hgkt.net"
         },
         {
           "id": "site-1780755052894",
