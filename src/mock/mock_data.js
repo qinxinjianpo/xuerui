@@ -38,7 +38,7 @@ export const mockData = {
           "id": "site-1775388275188",
           "name": "装机小工具",
           "url": "https://mefcl.lanzouw.com/b012oragb",
-          "description": "蓝奏盘 Windows 实用小软件合集，密码：8jfn",
+          "description": "实用小软件合集，8jfn",
           "icon": "https://www.faviconextractor.com/favicon/mefcl.lanzouw.com"
         }
       ]
