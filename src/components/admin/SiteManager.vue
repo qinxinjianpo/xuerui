@@ -656,8 +656,7 @@ const tryFallbackServices = async (domain) => {
   // 首先尝试icon服务
   // 支持多个favicon服务轮询尝试
   const iconServiceUrls = [
-    `https://www.faviconextractor.com/favicon/${domain}`,
-    `https://icon.maodeyu.fun/favicon/${domain}`
+    `https://www.bing.com/favicon.ico?url=${domain}`
   ]
 
   for (const iconServiceUrl of iconServiceUrls) {
@@ -684,9 +683,9 @@ const tryFallbackServices = async (domain) => {
     }
   }
 
-  const fallbackUrl = `https://www.faviconextractor.com/favicon/${domain}`
+  const fallbackUrl = `https://www.bing.com/favicon.ico?url=${domain}`
 
-  // 回退到标准favicon.ico路径
+  // 回退到标准favicon.ico路径（站点自己的图标，通常更稳定时再用）
   // const fallbackUrl = `https://${domain}/favicon.ico`
 
   try {
