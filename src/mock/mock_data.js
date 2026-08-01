@@ -304,6 +304,13 @@ export const mockData = {
           "url": "https://mirror.js.org/#/",
           "description": "用得上的镜像站.谷歌、github",
           "icon": "https://www.faviconextractor.com/favicon/mirror.js.org"
+        },
+        {
+          "id": "site-1785562623234",
+          "name": "digitalplat域名",
+          "url": "https://dash.domain.digitalplat.org/dashboard",
+          "description": "免费域名注册XP",
+          "icon": "https://www.faviconextractor.com/favicon/dash.domain.digitalplat.org"
         }
       ]
     },
