@@ -32,20 +32,22 @@
     <aside class="sidebar">
       <!-- Logo区域 -->
       <div class="logo-section">
-        <img src="/logo.png" alt="logo" class="logo" />
-        <h1 class="site-title">{{ title || '猫猫导航' }}</h1>
+        <svg class="logo" viewBox="0 0 24 24" fill="currentColor" aria-label="GitHub" role="img">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        <h1 class="site-title">{{ title || 'Sherry 导航' }}</h1>
       </div>
 
       <!-- 分类导航 -->
       <nav class="category-nav">
-        <h2 class="nav-title">分类导航</h2>
                 <ul class="category-list">
-          <li
-            v-for="category in categories"
-            :key="category.id"
-            class="category-item"
-            @click="scrollToCategory(category.id)"
-          >
+            <li
+              v-for="category in categories"
+              :key="category.id"
+              class="category-item"
+              :class="{ active: activeCategory === category.id }"
+              @click="scrollToCategory(category.id)"
+            >
             <span class="category-icon">{{ category.icon }}</span>
             <span class="category-name">{{ category.name }}</span>
           </li>
@@ -55,16 +57,13 @@
       <!-- 左侧边栏底部信息 -->
       <div class="sidebar-footer">
         <a
-          href="https://github.com/maodeyu180/mao_nav"
+          href="https://blog.sherry.dpdns.org/"
           target="_blank"
           rel="noopener noreferrer"
           class="github-link"
-          title="查看源代码"
+          title="前往博客"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-          <span>开源不易，Star一下吧！⭐</span>
+          <span>🌙 愿逐月华流照君</span>
         </a>
       </div>
     </aside>
@@ -119,12 +118,13 @@
             <button class="close-btn" @click="closeMobileMenu">×</button>
           </div>
                     <ul class="mobile-category-list">
-            <li
-              v-for="category in categories"
-              :key="category.id"
-              class="mobile-category-item"
-              @click="scrollToCategoryMobile(category.id)"
-            >
+              <li
+                v-for="category in categories"
+                :key="category.id"
+                class="mobile-category-item"
+                :class="{ active: activeCategory === category.id }"
+                @click="scrollToCategoryMobile(category.id)"
+              >
               <span class="category-icon">{{ category.icon }}</span>
               <span class="category-name">{{ category.name }}</span>
             </li>
@@ -196,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useNavigation } from '@/apis/useNavigation.js'
 import { useThemeStore } from '@/stores/counter.js'
 // 导入搜索引擎logo图片
@@ -217,6 +217,9 @@ const themeStore = useThemeStore()
 const searchQuery = ref('') // 搜索查询
 const selectedEngine = ref('bing') // 选中的搜索引擎，初始值会在组件挂载后更新
 const showMobileMenu = ref(false) // 移动端菜单显示状态
+
+// 当前高亮分类（滚动联动）
+const activeCategory = ref('')
 
 // 锁定功能相关
 const isLocked = ref(false) // 是否启用锁定功能
@@ -396,18 +399,43 @@ const openGitHub = () => {
   window.open('https://github.com/maodeyu180/mao_nav', '_blank')
 }
 
+// 滚动联动：根据右侧内容区滚动位置高亮对应分类
+const onContentScroll = () => {
+  const container = document.querySelector('.content-area')
+  if (!container) return
+  const containerTop = container.getBoundingClientRect().top
+  const sections = container.querySelectorAll('.category-section')
+  let current = activeCategory.value
+  for (const sec of sections) {
+    const top = sec.getBoundingClientRect().top - containerTop
+    if (top <= 120) {
+      current = sec.id.replace('category-', '')
+    }
+  }
+  if (current) activeCategory.value = current
+}
+
 // 组件挂载时获取数据
 onMounted(async () => {
   checkLockStatus() // 检查锁定状态
   await fetchCategories()
   // 设置默认搜索引擎
   selectedEngine.value = defaultSearchEngine.value
+  // 初始化滚动联动高亮
+  await nextTick()
+  activeCategory.value = categories.value[0]?.id || ''
+  const container = document.querySelector('.content-area')
+  container?.addEventListener('scroll', onContentScroll, { passive: true })
+  onContentScroll()
 })
 
 // 组件卸载时清理样式
 onUnmounted(() => {
   // 确保卸载时恢复body滚动
   document.body.style.overflow = ''
+  // 移除滚动监听，避免内存泄漏
+  const container = document.querySelector('.content-area')
+  container?.removeEventListener('scroll', onContentScroll)
 })
 </script>
 
@@ -522,7 +550,7 @@ onUnmounted(() => {
 
 /* 左侧边栏样式 */
 .sidebar {
-  width: 280px;
+  width: 220px;
   background-color: #2c3e50;
   color: white;
   padding: 0;
@@ -556,9 +584,16 @@ onUnmounted(() => {
 }
 
 .category-nav {
-  padding: 20px 0;
+  padding: 16px 0;
   height: calc(100vh - 180px); /* 为底部留出空间 */
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox：隐藏滚动条 */
+  -ms-overflow-style: none; /* 旧版 Edge：隐藏滚动条 */
+}
+
+/* Chrome / Safari / 新版 Edge：隐藏滚动条但保留滚动能力 */
+.category-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-title {
@@ -579,7 +614,7 @@ onUnmounted(() => {
 .category-item {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 8px 20px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -588,6 +623,16 @@ onUnmounted(() => {
 .category-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
   box-shadow: inset 4px 0 0 #3498db;
+}
+
+.category-item.active {
+  background-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 4px 0 0 #3498db;
+}
+
+.category-item.active .category-name {
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .category-icon {
@@ -836,6 +881,16 @@ onUnmounted(() => {
 
 .mobile-category-item:hover {
   background: #f8f9fa;
+}
+
+.mobile-category-item.active {
+  background: rgba(52, 152, 219, 0.14);
+  box-shadow: inset 3px 0 0 #3498db;
+}
+
+.mobile-category-item.active .category-name {
+  color: #3498db;
+  font-weight: 600;
 }
 
 .mobile-category-item .category-icon {
