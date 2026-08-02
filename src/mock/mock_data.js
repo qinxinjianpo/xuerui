@@ -76,7 +76,7 @@ export const mockData = {
           "name": "alger music",
           "url": "http://music.alger.fun/#/",
           "description": "绑定网易云的在线试听网站。",
-          "icon": "http://music.alger.fun/assets/icon-mGmYaNg4.png"
+          "icon": "/sitelogo/music.alger.fun.ico"
         },
         {
           "id": "site-1775270856187",
@@ -111,14 +111,14 @@ export const mockData = {
           "name": "GD音乐台",
           "url": "https://music.gdstudio.org/",
           "description": "一个小众的下载网站",
-          "icon": ""
+          "icon": "/sitelogo/music.gdstudio.org.ico"
         },
         {
           "id": "site-1777335776659",
           "name": "洛雪音源",
           "url": "https://music.imwzh.com/",
           "description": "",
-          "icon": "https://www.faviconextractor.com/favicon/music.imwzh.com"
+          "icon": "/sitelogo/music.imwzh.com.ico"
         }
       ]
     },
@@ -133,7 +133,7 @@ export const mockData = {
           "name": "知轩藏书备份",
           "url": "https://zxcs.dmnb.cf/",
           "description": "知轩藏书备份",
-          "icon": "https://www.faviconextractor.com/favicon/zxcs.dmnb.cf"
+          "icon": "/sitelogo/zxcs.dmnb.cf.ico"
         },
         {
           "id": "site-1775272547308",
