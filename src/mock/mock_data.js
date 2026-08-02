@@ -30,24 +30,46 @@ export const mockData = {
       ]
     },
     {
+      "id": "category-1780807732815",
+      "icon": "📖",
+      "name": "阅读资源",
+      "order": 1,
+      "sites": [
+        {
+          "id": "site-1780807815101",
+          "name": "知轩藏书备份",
+          "url": "https://zxcs.dmnb.cf/",
+          "description": "知轩藏书备份",
+          "icon": "https://www.faviconextractor.com/favicon/zxcs.dmnb.cf"
+        },
+        {
+          "id": "site-1775272547308",
+          "name": "Z-library",
+          "url": "https://zh.tku101.ru/",
+          "description": "世界上最大的电子图书馆。",
+          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
+        },
+        {
+          "id": "site-1775272884113",
+          "name": "微信读书",
+          "url": "https://weread.qq.com/",
+          "description": "",
+          "icon": "/sitelogo/weread.qq.com.ico"
+        }
+      ]
+    },
+    {
       "id": "category-1775281075542",
       "icon": "🎬",
       "name": "影视资源",
-      "order": 1,
+      "order": 2,
       "sites": [
         {
           "id": "site-1775281142857",
           "name": "聚完盒子",
-          "url": "https://juwanhezi.com",
-          "description": "TVbox接口数据源。",
+          "url": "https://juwanhezi.com/jsonlist",
+          "description": "TVbox接口数据源",
           "icon": "https://www.faviconextractor.com/favicon/juwanhezi.com"
-        },
-        {
-          "id": "site-1775281155899",
-          "name": "TVbox线路",
-          "url": "https://www.lige.fit",
-          "description": "Tvbox路线汇总",
-          "icon": "https://www.faviconextractor.com/favicon/www.lige.fit"
         },
         {
           "id": "site-1775387520772",
@@ -55,13 +77,6 @@ export const mockData = {
           "url": "https://pomo.mom/",
           "description": "4k资源下载。",
           "icon": "https://www.faviconextractor.com/favicon/pomo.mom"
-        },
-        {
-          "id": "site-1775387645149",
-          "name": "Gaze",
-          "url": "https://gaze.run/",
-          "description": "在线观影，不提供下载",
-          "icon": "https://www.faviconextractor.com/favicon/gaze.run"
         }
       ]
     },
@@ -69,14 +84,14 @@ export const mockData = {
       "id": "category-1775270594689",
       "icon": "🎵",
       "name": "音乐资源",
-      "order": 2,
+      "order": 3,
       "sites": [
         {
           "id": "site-1775270711257",
           "name": "alger music",
-          "url": "http://music.alger.fun/#/",
-          "description": "绑定网易云的在线试听网站。",
-          "icon": "/sitelogo/music.alger.fun.ico"
+          "url": "https://mc.alger.fun/",
+          "description": "绑定网易云的音乐软件。",
+          "icon": "/sitelogo/mc.alger.fun.ico"
         },
         {
           "id": "site-1775270856187",
@@ -100,13 +115,6 @@ export const mockData = {
           "icon": "https://www.faviconextractor.com/favicon/flac.music.hi.cn"
         },
         {
-          "id": "site-1775386967395",
-          "name": "泡椒音乐",
-          "url": "https://music.pjmp3.com/",
-          "description": "无损音乐下载，需其他音源",
-          "icon": "https://www.faviconextractor.com/favicon/music.pjmp3.com"
-        },
-        {
           "id": "site-1777335737291",
           "name": "GD音乐台",
           "url": "https://music.gdstudio.org/",
@@ -118,59 +126,31 @@ export const mockData = {
           "name": "洛雪音源",
           "url": "https://music.imwzh.com/",
           "description": "",
-          "icon": "/sitelogo/music.imwzh.com.ico"
+          "icon": "https://www.faviconextractor.com/favicon/music.imwzh.com"
         }
       ]
     },
     {
-      "id": "category-1780807732815",
-      "icon": "📖",
-      "name": "阅读资源",
-      "order": 3,
-      "sites": [
-        {
-          "id": "site-1780807815101",
-          "name": "知轩藏书备份",
-          "url": "https://zxcs.dmnb.cf/",
-          "description": "知轩藏书备份",
-          "icon": "/sitelogo/zxcs.dmnb.cf.ico"
-        },
-        {
-          "id": "site-1775272547308",
-          "name": "Z-library",
-          "url": "https://zh.tku101.ru/",
-          "description": "世界上最大的电子图书馆。",
-          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
-        },
-        {
-          "id": "site-1775272884113",
-          "name": "微信读书",
-          "url": "https://weread.qq.com/",
-          "description": "",
-          "icon": "/sitelogo/weread.qq.com.ico"
-        }
-      ]
-    },
-    {
-      "id": "category-1775272084261",
-      "icon": "🌐",
-      "name": "下载资源",
+      "id": "category-1785662246210",
+      "icon": "🎮",
+      "name": "游戏资源",
       "order": 4,
       "sites": [
-        {
-          "id": "site-1775272127909",
-          "name": "小轩网盘",
-          "url": "https://flowus.cn/xiaoxuan529/share/b1b11a9d-7fcd-48a2-b961-7a76f53baf2b?code=AHU9MJ",
-          "description": "网盘资源汇总。",
-          "icon": "https://www.faviconextractor.com/favicon/flowus.cn"
-        },
         {
           "id": "site-1775272190147",
           "name": "游戏下载",
           "url": "https://www.gamer520.com/",
           "description": "PC和主机游戏下载。",
           "icon": "https://www.faviconextractor.com/favicon/www.gamer520.com"
-        },
+        }
+      ]
+    },
+    {
+      "id": "category-1775272084261",
+      "icon": "🌐",
+      "name": "网盘资源",
+      "order": 5,
+      "sites": [
         {
           "id": "site-1775384047825",
           "name": "聚盘搜",
@@ -205,13 +185,6 @@ export const mockData = {
           "url": "https://www.cdn--bus.cyou/",
           "description": "",
           "icon": ""
-        },
-        {
-          "id": "site-1780753482656",
-          "name": "源仓库",
-          "url": "https://www.yck2026.top/",
-          "description": "源仓库",
-          "icon": "https://www.faviconextractor.com/favicon/www.yck2026.top"
         }
       ]
     },
@@ -219,7 +192,7 @@ export const mockData = {
       "id": "cloud",
       "name": "代码学习",
       "icon": "🧰",
-      "order": 5,
+      "order": 6,
       "sites": [
         {
           "id": "github",
@@ -304,7 +277,7 @@ export const mockData = {
       "id": "category-1775272572539",
       "icon": "📐",
       "name": "义务教育",
-      "order": 6,
+      "order": 7,
       "sites": [
         {
           "id": "site-1775272653399",
@@ -340,7 +313,7 @@ export const mockData = {
       "id": "category-1775380230027",
       "icon": "🧰",
       "name": "办公学习",
-      "order": 7,
+      "order": 8,
       "sites": [
         {
           "id": "site-1775380616292",
@@ -404,7 +377,7 @@ export const mockData = {
       "id": "category-1775381237467",
       "icon": "🎨",
       "name": "有点意思",
-      "order": 8,
+      "order": 9,
       "sites": [
         {
           "id": "site-1775381288626",
