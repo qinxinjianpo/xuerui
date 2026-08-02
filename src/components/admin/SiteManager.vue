@@ -3,7 +3,8 @@
     <div class="manager-header">
       <h2>🌐 站点管理</h2>
       <div class="header-actions">
-        <select v-model="selectedCategoryId" class="category-filter">
+        <select v-model="selectedCategoryId" class=
+          "category-filter">
           <option value="">所有分类</option>
           <option v-for="category in localCategories" :key="category.id" :value="category.id">
             {{ category.icon }} {{ category.name }}
@@ -653,45 +654,19 @@ const uploadPendingIconsToGitHub = async () => {
 
 // 获取favicon图标
 const tryFallbackServices = async (domain) => {
-  // 多个 favicon 服务按可靠性排序轮询尝试
-  // DuckDuckGo / Google 是专门的图标 CDN，能正确返回目标站点图标，比 Bing 稳定
-  const iconServiceUrls = [
-    `https://icons.duckduckgo.com/ip3/${domain}.ico`,
-    `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
-    `https://${domain}/favicon.ico`,
-    `https://www.bing.com/favicon.ico?url=${domain}`
-  ]
-
-  for (const iconServiceUrl of iconServiceUrls) {
-    try {
-      console.log(`🔍 尝试图标服务:`, iconServiceUrl)
-
-      // 先用 Image 检测图标是否可加载（跨域也适用，不触发 CORS 校验）
-      await testImage(iconServiceUrl)
-
-      // 检测通过：尽量下载缓存到本地（自托管），失败则直接使用外链
-      try {
-        const localPath = await downloadAndCacheIcon(iconServiceUrl, domain)
-        formData.value.icon = localPath
-        iconError.value = false
-        console.log(`✅ 成功下载并缓存图标: ${iconServiceUrl}`)
-        return
-      } catch (downloadError) {
-        console.warn(`⚠️ 缓存失败，直接使用外链: ${iconServiceUrl}`, downloadError.message)
-        formData.value.icon = iconServiceUrl
-        iconError.value = false
-        console.log(`✅ 直接使用外链图标: ${iconServiceUrl}`)
-        return
-      }
-    } catch (error) {
-      console.log(`❌ 图标服务失败:`, iconServiceUrl, error.message)
-      // 继续尝试下一个服务
-    }
+  // 通过同源的服务端代理 /api/favicon 获取真实图标
+  // —— 内地网络稳定：浏览器只跟自己 Pages 域名通信，不再直连被墙的第三方 CDN
+  const faviconUrl = `/api/favicon?domain=${encodeURIComponent(domain)}`
+  try {
+    console.log(`🔍 通过服务端代理获取图标: ${domain}`)
+    const localPath = await downloadAndCacheIcon(faviconUrl, domain)
+    formData.value.icon = localPath
+    iconError.value = false
+    console.log(`✅ 图标已获取并缓存: ${localPath}`)
+  } catch (error) {
+    console.error('❌ 无法获取网站图标:', error.message)
+    alert('❌ 无法自动获取图标，请手动输入图标 URL。\n\n💡 建议使用网站的 favicon.ico 或其他图标链接。')
   }
-
-  // 所有服务都失败
-  console.error('❌ 无法获取网站图标')
-  alert('❌ 无法获取网站图标，请手动输入图标URL。\n\n💡 建议使用网站的 favicon.ico 或其他图标链接。')
 }
 
 // 自动检测图标
