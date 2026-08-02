@@ -26,49 +26,42 @@ export const mockData = {
           "url": "http://4275.com/",
           "description": "文件快速分享下载。",
           "icon": "https://www.faviconextractor.com/favicon/4275.com"
-        },
-        {
-          "id": "site-1775387728825",
-          "name": "不死鸟",
-          "url": "https://iui.su/",
-          "description": "资源分享",
-          "icon": "https://www.faviconextractor.com/favicon/iui.su"
-        },
-        {
-          "id": "site-1775388275188",
-          "name": "装机小工具",
-          "url": "https://mefcl.lanzouw.com/b012oragb",
-          "description": "实用小软件合集，8jfn",
-          "icon": "https://www.faviconextractor.com/favicon/mefcl.lanzouw.com"
         }
       ]
     },
     {
-      "id": "category-1780807732815",
-      "icon": "📱",
-      "name": "阅读资源",
+      "id": "category-1775281075542",
+      "icon": "🎬",
+      "name": "影视资源",
       "order": 1,
       "sites": [
         {
-          "id": "site-1780807815101",
-          "name": "知轩藏书备份",
-          "url": "https://zxcs.dmnb.cf/",
-          "description": "知轩藏书备份",
-          "icon": "https://www.faviconextractor.com/favicon/zxcs.dmnb.cf"
+          "id": "site-1775281142857",
+          "name": "聚完盒子",
+          "url": "https://juwanhezi.com",
+          "description": "TVbox接口数据源。",
+          "icon": "https://www.faviconextractor.com/favicon/juwanhezi.com"
         },
         {
-          "id": "site-1775272547308",
-          "name": "Z-library",
-          "url": "https://zh.tku101.ru/",
-          "description": "世界上最大的电子图书馆。",
-          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
+          "id": "site-1775281155899",
+          "name": "TVbox线路",
+          "url": "https://www.lige.fit",
+          "description": "Tvbox路线汇总",
+          "icon": "https://www.faviconextractor.com/favicon/www.lige.fit"
         },
         {
-          "id": "site-1775272884113",
-          "name": "微信读书",
-          "url": "https://weread.qq.com/",
-          "description": "",
-          "icon": "https://www.faviconextractor.com/favicon/weread.qq.com"
+          "id": "site-1775387520772",
+          "name": "POM",
+          "url": "https://pomo.mom/",
+          "description": "4k资源下载。",
+          "icon": "https://www.faviconextractor.com/favicon/pomo.mom"
+        },
+        {
+          "id": "site-1775387645149",
+          "name": "Gaze",
+          "url": "https://gaze.run/",
+          "description": "在线观影，不提供下载",
+          "icon": "https://www.faviconextractor.com/favicon/gaze.run"
         }
       ]
     },
@@ -130,44 +123,37 @@ export const mockData = {
       ]
     },
     {
-      "id": "category-1775281075542",
-      "icon": "📱",
-      "name": "影视资源",
+      "id": "category-1780807732815",
+      "icon": "📖",
+      "name": "阅读资源",
       "order": 3,
       "sites": [
         {
-          "id": "site-1775281142857",
-          "name": "聚完盒子",
-          "url": "https://juwanhezi.com",
-          "description": "TVbox接口数据源。",
-          "icon": "https://www.faviconextractor.com/favicon/juwanhezi.com"
+          "id": "site-1780807815101",
+          "name": "知轩藏书备份",
+          "url": "https://zxcs.dmnb.cf/",
+          "description": "知轩藏书备份",
+          "icon": "https://www.faviconextractor.com/favicon/zxcs.dmnb.cf"
         },
         {
-          "id": "site-1775281155899",
-          "name": "TVbox线路",
-          "url": "https://www.lige.fit",
-          "description": "Tvbox路线汇总",
-          "icon": "https://www.faviconextractor.com/favicon/www.lige.fit"
+          "id": "site-1775272547308",
+          "name": "Z-library",
+          "url": "https://zh.tku101.ru/",
+          "description": "世界上最大的电子图书馆。",
+          "icon": "https://www.faviconextractor.com/favicon/zh.tku101.ru"
         },
         {
-          "id": "site-1775387520772",
-          "name": "POM",
-          "url": "https://pomo.mom/",
-          "description": "4k资源下载。",
-          "icon": "https://www.faviconextractor.com/favicon/pomo.mom"
-        },
-        {
-          "id": "site-1775387645149",
-          "name": "Gaze",
-          "url": "https://gaze.run/",
-          "description": "在线观影，不提供下载",
-          "icon": "https://www.faviconextractor.com/favicon/gaze.run"
+          "id": "site-1775272884113",
+          "name": "微信读书",
+          "url": "https://weread.qq.com/",
+          "description": "",
+          "icon": "/sitelogo/weread.qq.com.ico"
         }
       ]
     },
     {
       "id": "category-1775272084261",
-      "icon": "📁",
+      "icon": "🌐",
       "name": "下载资源",
       "order": 4,
       "sites": [
@@ -232,7 +218,7 @@ export const mockData = {
     {
       "id": "cloud",
       "name": "代码学习",
-      "icon": "☁️",
+      "icon": "🧰",
       "order": 5,
       "sites": [
         {
@@ -316,7 +302,7 @@ export const mockData = {
     },
     {
       "id": "category-1775272572539",
-      "icon": "📊",
+      "icon": "📐",
       "name": "义务教育",
       "order": 6,
       "sites": [
@@ -352,7 +338,7 @@ export const mockData = {
     },
     {
       "id": "category-1775380230027",
-      "icon": "🔧",
+      "icon": "🧰",
       "name": "办公学习",
       "order": 7,
       "sites": [
@@ -437,37 +423,8 @@ export const mockData = {
       ]
     },
     {
-      "id": "category-1777335872754",
-      "icon": "🌐",
-      "name": "未来科技",
-      "order": 9,
-      "sites": [
-        {
-          "id": "site-1777335924433",
-          "name": "Deepseek",
-          "url": "https://www.deepseek.com/",
-          "description": "免费好用的语言大模型。",
-          "icon": "https://www.faviconextractor.com/favicon/www.deepseek.com"
-        },
-        {
-          "id": "site-1780808655746",
-          "name": "千问",
-          "url": "https://www.qianwen.com/",
-          "description": "阿里千问",
-          "icon": "https://www.faviconextractor.com/favicon/www.qianwen.com"
-        },
-        {
-          "id": "site-1780808710785",
-          "name": "豆包",
-          "url": "https://www.doubao.com/",
-          "description": "",
-          "icon": ""
-        }
-      ]
-    },
-    {
       "id": "category-1780751961419",
-      "icon": "🔍",
+      "icon": "🧭",
       "name": "生活常用",
       "order": 10,
       "sites": [
