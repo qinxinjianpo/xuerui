@@ -46,7 +46,10 @@
               :key="category.id"
               class="category-item"
               :class="{ active: activeCategory === category.id }"
+              role="button"
+              tabindex="0"
               @click="scrollToCategory(category.id)"
+              @keydown.enter.prevent="scrollToCategory(category.id)"
             >
             <span class="category-icon">{{ category.icon }}</span>
             <span class="category-name">{{ category.name }}</span>
@@ -75,7 +78,8 @@
         <div class="search-container">
           <div class="search-engine-selector">
             <img :src="searchEngines[selectedEngine].icon" :alt="selectedEngine" class="engine-logo" />
-            <select v-model="selectedEngine" class="engine-select">
+            <span class="engine-caret">▾</span>
+            <select v-model="selectedEngine" class="engine-select" aria-label="选择搜索引擎">
               <option value="google">Google</option>
               <option value="baidu">Baidu</option>
               <option value="bing">Bing</option>
@@ -102,7 +106,7 @@
         </button>
 
         <!-- 移动端菜单按钮 -->
-        <button class="mobile-menu-btn" @click="toggleMobileMenu">
+        <button class="mobile-menu-btn" @click="toggleMobileMenu" aria-label="打开分类导航">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -115,7 +119,7 @@
               <h3>分类导航</h3>
               <img :src="githubLogo" alt="GitHub" class="header-github-icon" @click="openGitHub" />
             </div>
-            <button class="close-btn" @click="closeMobileMenu">×</button>
+            <button class="close-btn" @click="closeMobileMenu" aria-label="关闭菜单">×</button>
           </div>
                     <ul class="mobile-category-list">
               <li
@@ -123,7 +127,10 @@
                 :key="category.id"
                 class="mobile-category-item"
                 :class="{ active: activeCategory === category.id }"
+                role="button"
+                tabindex="0"
                 @click="scrollToCategoryMobile(category.id)"
+                @keydown.enter.prevent="scrollToCategoryMobile(category.id)"
               >
               <span class="category-icon">{{ category.icon }}</span>
               <span class="category-name">{{ category.name }}</span>
@@ -151,39 +158,61 @@
 
                 <!-- 分类内容 -->
         <div v-else class="categories-container">
-          <section
-            v-for="category in categories"
-            :key="category.id"
-            class="category-section"
-            :id="`category-${category.id}`"
-          >
-            <h2 class="category-title">
-              <span class="category-icon">{{ category.icon }}</span>
-              <span class="category-name">{{ category.name }}</span>
-            </h2>
+          <template v-if="filteredCategories.length">
+            <section
+              v-for="category in filteredCategories"
+              :key="category.id"
+              class="category-section"
+              :id="`category-${category.id}`"
+            >
+              <h2 class="category-title">
+                <span class="category-icon">{{ category.icon }}</span>
+                <span class="category-name">{{ category.name }}</span>
+                <span class="cat-count">{{ category.sites.length }} 站</span>
+              </h2>
 
-            <div class="sites-grid">
-              <a
-                v-for="site in category.sites"
-                :key="site.id"
-                :href="site.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="site-card"
-              >
-                <div class="site-icon">
-                  <img :src="site.icon" :alt="site.name" @error="handleImageError" />
-                </div>
-                <div class="site-info">
-                  <h3 class="site-name">{{ site.name }}</h3>
-                  <p class="site-description">{{ site.description }}</p>
-                </div>
-              </a>
-            </div>
-          </section>
+              <div class="sites-grid">
+                <a
+                  v-for="site in category.sites"
+                  :key="site.id"
+                  :href="site.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="site-card"
+                >
+                  <div class="site-icon">
+                    <img :src="site.icon" :alt="site.name" loading="lazy" @error="handleImageError" />
+                  </div>
+                  <div class="site-info">
+                    <h3 class="site-name">{{ site.name }}</h3>
+                    <p class="site-description">{{ site.description }}</p>
+                  </div>
+                </a>
+              </div>
+            </section>
+          </template>
 
+          <!-- 站内过滤空态 -->
+          <div v-else class="filter-empty">
+            <div class="filter-empty-icon">🔍</div>
+            <p>没有找到与「{{ searchQuery }}」相关的站点</p>
+            <button class="filter-clear-btn" @click="searchQuery = ''">清除过滤</button>
+          </div>
         </div>
       </div>
+
+      <!-- 回到顶部 -->
+      <button
+        class="back-top-btn"
+        :class="{ show: showBackTop }"
+        @click="scrollToTop"
+        aria-label="回到顶部"
+        title="回到顶部"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 5L12 19M12 5L5.5 11.5M12 5L18.5 11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
 
       <!-- 备案号默认显示在主内容底部，未配置时不占用空间 -->
       <footer v-if="icpNumber" class="icp-footer">
@@ -196,7 +225,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useNavigation } from '@/apis/useNavigation.js'
 import { useThemeStore } from '@/stores/counter.js'
 // 导入搜索引擎logo图片
@@ -217,9 +246,28 @@ const themeStore = useThemeStore()
 const searchQuery = ref('') // 搜索查询
 const selectedEngine = ref('bing') // 选中的搜索引擎，初始值会在组件挂载后更新
 const showMobileMenu = ref(false) // 移动端菜单显示状态
+const showBackTop = ref(false) // 回到顶部按钮显示状态
 
 // 当前高亮分类（滚动联动）
 const activeCategory = ref('')
+
+// 站内快速过滤：有输入时先在本地按名称/描述/网址匹配；
+// 过滤后各分类只显示命中的站点，全部无命中时展示空态
+const filteredCategories = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return categories.value
+  return categories.value
+    .map((cat) => ({
+      ...cat,
+      sites: (cat.sites || []).filter(
+        (s) =>
+          (s.name || '').toLowerCase().includes(q) ||
+          (s.description || '').toLowerCase().includes(q) ||
+          (s.url || '').toLowerCase().includes(q)
+      ),
+    }))
+    .filter((cat) => cat.sites.length > 0)
+})
 
 // 锁定功能相关
 const isLocked = ref(false) // 是否启用锁定功能
@@ -233,22 +281,22 @@ const searchEngines = {
   google: {
     url: 'https://www.google.com/search?q=',
     icon: googleLogo,
-    placeholder: 'Google (点logo切换搜索引擎'
+    placeholder: 'Google 搜索'
   },
   baidu: {
     url: 'https://www.baidu.com/s?wd=',
     icon: baiduLogo,
-    placeholder: '百度一下(点logo切换搜索引擎'
+    placeholder: '百度一下'
   },
   bing: {
     url: 'https://www.bing.com/search?q=',
     icon: bingLogo,
-    placeholder: 'Bing (点logo切换搜索引擎)'
+    placeholder: 'Bing 搜索'
   },
   duckduckgo: {
     url: 'https://duckduckgo.com/?q=',
     icon: duckLogo,
-    placeholder: 'DuckDuckGo (点logo切换搜索引擎)'
+    placeholder: 'DuckDuckGo 搜索'
   }
 }
 
@@ -290,9 +338,9 @@ const scrollToCategory = (categoryId) => {
     let targetTop = 0
 
     if (isMobile) {
-      // 移动端：在 content-area 容器内滚动
+      // 移动端：在 content-area 容器内滚动，搜索栏高度运行时实测，避免硬编码失准
       const elementOffsetTop = element.offsetTop
-      const searchHeaderHeight = 80 // 固定高度，因为搜索框是fixed定位
+      const searchHeaderHeight = document.querySelector('.search-header')?.offsetHeight || 80
       targetTop = elementOffsetTop - searchHeaderHeight
     } else {
       // 桌面端：在容器内滚动
@@ -351,20 +399,36 @@ const handleUnlock = async () => {
   }
 }
 
-// 处理搜索
+// 处理搜索：本地有匹配站点时回车直达第一个命中站点，否则回退外部搜索引擎
 const handleSearch = () => {
-  if (!searchQuery.value.trim()) return
+  const q = searchQuery.value.trim()
+  if (!q) return
+
+  const first = filteredCategories.value[0]?.sites?.[0]
+  if (first) {
+    window.open(first.url, '_blank')
+    return
+  }
 
   const engine = searchEngines[selectedEngine.value]
-  const url = engine.url + encodeURIComponent(searchQuery.value)
+  const url = engine.url + encodeURIComponent(q)
   window.open(url, '_blank')
 }
 
-// 处理图片加载错误
+// 处理图片加载错误：渲染"首字母彩色占位块"，避免回退成站点自身图标造成误导
 const handleImageError = (event) => {
-  // 设置默认的 favicon.ico 作为 fallback 图片
-  event.target.src = '/favicon.ico'
-  event.target.onerror = null // 防止无限循环
+  const img = event.target
+  const name = img.alt || '?'
+  const hue = [...name].reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 360
+
+  const box = document.createElement('span')
+  box.textContent = name.charAt(0).toUpperCase()
+  box.style.cssText =
+    'display:flex;width:100%;height:100%;align-items:center;justify-content:center;' +
+    'font-size:14px;font-weight:600;color:#fff;' +
+    `background:hsl(${hue}, 60%, 55%);border-radius:inherit;`
+
+  img.replaceWith(box)
 }
 
 // 移动端菜单控制
@@ -394,15 +458,25 @@ const scrollToCategoryMobile = (categoryId) => {
   }, 200)
 }
 
-// 打开GitHub项目页面
+// 打开GitHub项目页面（指向本项目仓库）
 const openGitHub = () => {
-  window.open('https://github.com/maodeyu180/mao_nav', '_blank')
+  window.open('https://github.com/qinxinjianpo/xuerui', '_blank')
+}
+
+// 回到顶部
+const scrollToTop = () => {
+  const container = document.querySelector('.content-area')
+  if (container) smoothScrollTo(container, 0, 500)
 }
 
 // 滚动联动：根据右侧内容区滚动位置高亮对应分类
 const onContentScroll = () => {
   const container = document.querySelector('.content-area')
   if (!container) return
+
+  // 滚动超过一屏后显示回到顶部按钮
+  showBackTop.value = container.scrollTop > 400
+
   const containerTop = container.getBoundingClientRect().top
   const sections = container.querySelectorAll('.category-section')
   let current = activeCategory.value
@@ -440,7 +514,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 锁定界面样式 */
+/* 锁定界面样式（独立场景，保留亮暗两套显式配色） */
 .lock-container {
   position: fixed;
   top: 0;
@@ -503,14 +577,14 @@ onUnmounted(() => {
 
 .lock-box .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .unlock-btn {
   width: 100%;
   padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 8px;
@@ -522,8 +596,9 @@ onUnmounted(() => {
 }
 
 .unlock-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
 }
 
 .unlock-btn:disabled {
@@ -542,16 +617,54 @@ onUnmounted(() => {
   border: 1px solid #feb2b2;
 }
 
+.dark .lock-container {
+  background: #0f172a;
+}
+
+.dark .lock-box {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.dark .lock-box h1 {
+  color: #e2e8f0;
+}
+
+.dark .lock-description {
+  color: #94a3b8;
+}
+
+.dark .lock-box .form-group label {
+  color: #cbd5e1;
+}
+
+.dark .lock-box .form-input {
+  background: var(--surface-2);
+  border: 2px solid var(--line);
+  color: #e2e8f0;
+}
+
+.dark .lock-box .form-input:focus {
+  border-color: var(--accent);
+}
+
+.dark .lock-box .error-message {
+  background: #7f1d1d;
+  color: #fecaca;
+  border-color: #991b1b;
+}
+
+/* ===== 导航主页 ===== */
 .nav-home {
   display: flex;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background-color: var(--bg);
 }
 
 /* 左侧边栏样式 */
 .sidebar {
   width: 220px;
-  background-color: #2c3e50;
+  background-color: var(--sidebar);
   color: white;
   padding: 0;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
@@ -566,7 +679,7 @@ onUnmounted(() => {
   padding-left: 20px;
   padding-top: 13px;
   padding-bottom: 13px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--sidebar-line);
 }
 
 .logo {
@@ -600,7 +713,7 @@ onUnmounted(() => {
   font-size: 16px;
   font-weight: 600;
   margin: 0 20px 15px;
-  color: #bdc3c7;
+  color: var(--sidebar-text);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
@@ -621,13 +734,19 @@ onUnmounted(() => {
 }
 
 .category-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 4px 0 0 #3498db;
+  background-color: var(--sidebar-hover);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+.category-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px;
 }
 
 .category-item.active {
-  background-color: rgba(255, 255, 255, 0.14);
-  box-shadow: inset 4px 0 0 #3498db;
+  background-color: var(--sidebar-active);
+  box-shadow: inset 4px 0 0 var(--accent);
 }
 
 .category-item.active .category-name {
@@ -635,11 +754,18 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-.category-icon {
-  font-size: 18px;
+.category-item .category-icon {
+  /* emoji 统一"装"进圆角小底板，跨平台观感一致 */
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
   margin-right: 12px;
-  width: 20px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .category-name {
@@ -650,14 +776,14 @@ onUnmounted(() => {
 /* 左侧边栏底部 */
 .sidebar-footer {
   padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--sidebar-line);
   margin-top: auto;
 }
 
 .github-link {
   display: flex;
   align-items: center;
-  color: #bdc3c7;
+  color: var(--sidebar-text);
   text-decoration: none;
   padding: 8px 12px;
   border-radius: 6px;
@@ -666,18 +792,9 @@ onUnmounted(() => {
 }
 
 .github-link:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--sidebar-hover);
   color: white;
   transform: translateY(-1px);
-}
-
-.github-link svg {
-  margin-right: 8px;
-  transition: transform 0.3s ease;
-}
-
-.github-link:hover svg {
-  transform: scale(1.1);
 }
 
 /* 右侧主内容区样式 */
@@ -690,9 +807,9 @@ onUnmounted(() => {
 }
 
 .search-header {
-  background: white;
+  background: var(--surface);
   padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -708,7 +825,8 @@ onUnmounted(() => {
   gap: 0;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
   flex: 1;
 }
 
@@ -723,22 +841,30 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  background: #f8f9fa;
-  border-right: 1px solid #e9ecef;
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
   transition: background-color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .search-engine-selector:hover {
-  background: #e9ecef;
+  background: var(--surface-3);
 }
 
 .engine-logo {
   width: 24px;
   height: 24px;
-  margin: 8px;
+  margin: 8px 4px 8px 8px;
   object-fit: contain;
   pointer-events: none;
   border-radius: 4px;
+}
+
+.engine-caret {
+  font-size: 10px;
+  color: var(--ink-2);
+  margin-right: 6px;
+  pointer-events: none;
 }
 
 .engine-select {
@@ -760,11 +886,13 @@ onUnmounted(() => {
   padding: 12px 16px;
   font-size: 16px;
   outline: none;
-  background: white;
+  background: var(--surface);
+  color: var(--ink-1);
+  min-width: 0;
 }
 
 .search-input::placeholder {
-  color: #95a5a6;
+  color: var(--ink-3);
 }
 
 /* 移动端菜单按钮 */
@@ -772,7 +900,7 @@ onUnmounted(() => {
   display: none;
   background: none;
   border: none;
-  color: #2c3e50;
+  color: var(--ink-1);
   cursor: pointer;
   padding: 8px;
   border-radius: 4px;
@@ -780,7 +908,7 @@ onUnmounted(() => {
 }
 
 .mobile-menu-btn:hover {
-  background: #f8f9fa;
+  background: var(--surface-2);
 }
 
 /* 移动端菜单 */
@@ -790,7 +918,7 @@ onUnmounted(() => {
   right: -100%;
   width: 240px;
   height: 100vh;
-  background: white;
+  background: var(--surface);
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1001;
   transition: right 0.3s ease;
@@ -809,8 +937,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #e9ecef;
-  background: #2c3e50;
+  border-bottom: 1px solid var(--line);
+  background: var(--sidebar);
   color: white;
   flex-shrink: 0;
 }
@@ -867,7 +995,7 @@ onUnmounted(() => {
   margin: 0;
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 160px; /* 增加底部内边距确保最后一项完全可见 */
+  padding-bottom: 40px;
 }
 
 .mobile-category-item {
@@ -876,37 +1004,46 @@ onUnmounted(() => {
   padding: 16px 20px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  border-bottom: 1px solid #f8f9fa;
+  border-bottom: 1px solid var(--surface-2);
 }
 
 .mobile-category-item:hover {
-  background: #f8f9fa;
+  background: var(--surface-2);
+}
+
+.mobile-category-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .mobile-category-item.active {
-  background: rgba(52, 152, 219, 0.14);
-  box-shadow: inset 3px 0 0 #3498db;
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .mobile-category-item.active .category-name {
-  color: #3498db;
+  color: var(--accent);
   font-weight: 600;
 }
 
 .mobile-category-item .category-icon {
-  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
   margin-right: 12px;
-  width: 24px;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--surface-2);
+  flex-shrink: 0;
 }
 
 .mobile-category-item .category-name {
   font-size: 16px;
   font-weight: 500;
-  color: #2c3e50;
+  color: var(--ink-1);
 }
-
-
 
 /* 移动端菜单遮罩 */
 .mobile-menu-overlay {
@@ -915,7 +1052,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   z-index: 999;
   opacity: 0;
   visibility: hidden;
@@ -931,8 +1068,23 @@ onUnmounted(() => {
 .content-area {
   flex: 1;
   padding: 30px;
-  padding-bottom: 400px;
+  padding-bottom: 80px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+.content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 3px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .loading, .error {
@@ -941,14 +1093,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 200px;
-  color: #7f8c8d;
+  color: var(--ink-2);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #ecf0f1;
-  border-top: 4px solid #3498db;
+  border: 4px solid var(--line);
+  border-top: 4px solid var(--accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -961,80 +1113,119 @@ onUnmounted(() => {
 .retry-btn {
   margin-top: 10px;
   padding: 8px 16px;
-  background: #3498db;
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
+.retry-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* 站内过滤空态 */
+.filter-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: var(--ink-2);
+  gap: 8px;
+}
+
+.filter-empty-icon {
+  font-size: 40px;
+}
+
+.filter-clear-btn {
+  margin-top: 6px;
+  padding: 8px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.filter-clear-btn:hover {
+  background: var(--accent-hover);
+}
+
 .categories-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
 .category-section {
-  margin-bottom: 50px;
+  margin-bottom: 44px;
+  scroll-margin-top: 90px;
 }
 
 .category-title {
-  font-size: 32px;
+  font-size: 21px;
   font-weight: 600;
-  margin-bottom: 25px;
-  color: #2c3e50;
+  margin-bottom: 18px;
+  color: var(--ink-1);
   display: flex;
   align-items: center;
 }
 
 .category-title .category-icon {
-  font-size: 32px;
-  margin-right: 16px;
+  font-size: 19px;
+  margin-right: 10px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  flex-shrink: 0;
 }
 
 .category-title .category-name {
+  font-size: inherit;
+}
+
+.cat-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 10px;
+  border-radius: 999px;
   margin-left: 10px;
-  font-size: 26px;
+  white-space: nowrap;
 }
 
 .sites-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
 
 .site-card {
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
   padding: 12px;
   text-decoration: none;
   color: inherit;
-  transition: all 0.3s ease;
-  border: 1px solid #e9ecef;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--line);
   position: relative;
   overflow: hidden;
 }
 
-.site-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
 .site-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.site-card:hover::before {
-  opacity: 1;
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
 }
 
 .site-icon {
@@ -1045,12 +1236,10 @@ onUnmounted(() => {
   margin-right: 10px;
   border-radius: 8px;
   overflow: hidden;
-  background: #f8f9fa;
+  background: var(--surface-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 1;
 }
 
 .site-icon img {
@@ -1063,20 +1252,21 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  position: relative;
-  z-index: 1;
 }
 
 .site-name {
   font-size: 15px;
   font-weight: 600;
   margin: 0 0 3px 0;
-  color: #2c3e50;
+  color: var(--ink-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .site-description {
   font-size: 12px;
-  color: #7f8c8d;
+  color: var(--ink-2);
   margin: 0;
   line-height: 1.3;
   white-space: nowrap;
@@ -1084,24 +1274,78 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
+/* 回到顶部按钮 */
+.back-top-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-1);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: all 0.25s ease;
+  z-index: 400;
+}
+
+.back-top-btn.show {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.back-top-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* 备案信息 */
 .icp-footer {
   flex-shrink: 0;
   padding: 10px 20px;
   text-align: center;
-  background: white;
-  border-top: 1px solid #e9ecef;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
   font-size: 13px;
 }
 
 .icp-footer a {
-  color: #7f8c8d;
+  color: var(--ink-2);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .icp-footer a:hover {
-  color: #3498db;
+  color: var(--accent);
+}
+
+/* 主题切换按钮样式 */
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--ink-1);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--surface-2);
 }
 
 /* 响应式设计 */
@@ -1134,15 +1378,15 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     z-index: 500;
-    background: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
   }
 
   .content-area {
     flex: 1;
     padding: 20px 15px;
     padding-top: 100px; /* 为固定的搜索框留出空间 */
-    padding-bottom: 300px; /* 增加底部padding确保内容可以完全滚动 */
+    padding-bottom: 80px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
   }
@@ -1158,9 +1402,10 @@ onUnmounted(() => {
   }
 
   .site-card {
-    padding: 12px;
+    padding: 12px 8px;
     flex-direction: column;
     text-align: center;
+    min-height: 118px;
   }
 
   .site-card .site-icon {
@@ -1168,234 +1413,54 @@ onUnmounted(() => {
     margin-bottom: 8px;
   }
 
+  /* 小屏卡片：标题单行截断、描述最多两行，避免折行拆字 */
   .site-card .site-name {
-    font-size: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    word-break: break-all;
+    line-height: 1.35;
+    font-size: 14px;
   }
 
   .site-card .site-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    word-break: break-all;
+    line-height: 1.35;
     font-size: 12px;
   }
 
   .category-title {
-    font-size: 24px;
-    margin-bottom: 20px;
+    font-size: 19px;
+    margin-bottom: 16px;
   }
 
   .category-title .category-icon {
-    font-size: 28px;
-    margin-right: 12px;
-  }
-
-  .category-title .category-name {
-    font-size: 22px;
+    font-size: 20px;
+    margin-right: 8px;
   }
 
   .icp-footer {
     padding: 8px 15px;
     font-size: 12px;
   }
+
+  .back-top-btn {
+    right: 16px;
+    bottom: 20px;
+  }
 }
 
-/* 主题切换按钮样式 */
-.theme-toggle-btn {
-  background: none;
-  border: none;
-  color: #2c3e50;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 10px;
-}
-
-.theme-toggle-btn:hover {
-  background: #f8f9fa;
-  transform: scale(1.1);
-}
-
-/* 暗色模式样式 */
-.dark .nav-home {
-  background-color: #1a1a1a;
-}
-
-.dark .sidebar {
-  background-color: #1e293b;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-}
-
-.dark .search-header {
-  background: #1e293b;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.dark .theme-toggle-btn {
-  color: #e2e8f0;
-}
-
-.dark .theme-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.dark .mobile-menu-btn {
-  color: #e2e8f0;
-}
-
-.dark .mobile-menu-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.dark .search-container {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.dark .search-engine-selector {
-  background: #374151;
-  border-right: 1px solid #4b5563;
-}
-
-.dark .search-engine-selector:hover {
-  background: #4b5563;
-}
-
-.dark .search-input {
-  background: #374151;
-  color: #e2e8f0;
-  border: none;
-}
-
-.dark .search-input::placeholder {
-  color: #9ca3af;
-}
-
-.dark .engine-select {
-  background: #374151;
-  color: #e2e8f0;
-}
-
-.dark .engine-select option {
-  background: #374151;
-  color: #e2e8f0;
-}
-
-.dark .content-area {
-  background: #1a1a1a;
-}
-
-.dark .site-card {
-  background: #374151;
-  border: 1px solid #4b5563;
-  color: #e2e8f0;
-}
-
-.dark .site-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-.dark .site-card::before {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
-}
-
-.dark .site-name {
-  color: #e2e8f0;
-}
-
-.dark .site-description {
-  color: #9ca3af;
-}
-
-.dark .site-icon {
-  background: #4b5563;
-}
-
-.dark .category-title {
-  color: #e2e8f0;
-}
-
-.dark .mobile-menu {
-  background: #1e293b;
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
-}
-
-.dark .mobile-category-item {
-  border-bottom: 1px solid #374151;
-}
-
-.dark .mobile-category-item:hover {
-  background: #374151;
-}
-
-.dark .mobile-category-item .category-name {
-  color: #e2e8f0;
-}
-
-.dark .icp-footer {
-  background: #1e293b;
-  border-top-color: #374151;
-}
-
-.dark .icp-footer a {
-  color: #9ca3af;
-}
-
-.dark .icp-footer a:hover {
-  color: #60a5fa;
-}
-
-.dark .loading,
-.dark .error {
-  color: #9ca3af;
-}
-
-.dark .retry-btn {
-  background: #3b82f6;
-  color: white;
-}
-
-.dark .retry-btn:hover {
-  background: #2563eb;
-}
-
-/* 锁定界面暗色模式 */
-.dark .lock-container {
-  background: #0f172a;
-}
-
-.dark .lock-box {
-  background: #1e293b;
-  color: #e2e8f0;
-}
-
-.dark .lock-box h1 {
-  color: #e2e8f0;
-}
-
-.dark .lock-description {
-  color: #94a3b8;
-}
-
-.dark .lock-box .form-group label {
-  color: #cbd5e1;
-}
-
-.dark .lock-box .form-input {
-  background: #374151;
-  border: 2px solid #4b5563;
-  color: #e2e8f0;
-}
-
-.dark .lock-box .form-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.dark .unlock-btn {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-}
-
-.dark .unlock-btn:hover:not(:disabled) {
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+/* 小屏手机：两列布局，卡片更从容 */
+@media (max-width: 480px) {
+  .sites-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

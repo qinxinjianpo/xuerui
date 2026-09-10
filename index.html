@@ -1,13 +1,58 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="琴心剑魄的个人导航站：常用站点、阅读影视音乐资源一站直达">
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
     <title>Sherry 导航</title>
+    <script>
+      /* 主题防闪色：在 bundle 加载前根据 localStorage / 系统偏好挂 dark 类，
+         逻辑与 src/stores/counter.js 的 useThemeStore 保持一致 */
+      (function () {
+        var t = localStorage.getItem('theme');
+        var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.classList.add('dark');
+      })();
+    </script>
+    <style>
+      /* 首屏骨架屏：Vue 挂载后自动被替换，消除白屏感 */
+      .boot-skeleton {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f7fa;
+      }
+      html.dark .boot-skeleton { background: #111827; }
+      .boot-logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        background: #1e293b;
+        color: #fff;
+        font-size: 26px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: boot-pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: .55; transform: scale(.94); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-logo { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="boot-skeleton"><div class="boot-logo">琴</div></div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
