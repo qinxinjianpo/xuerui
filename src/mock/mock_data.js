@@ -142,6 +142,13 @@ export const mockData = {
           "url": "https://www.gamer520.com/",
           "description": "PC和主机游戏下载。",
           "icon": "https://www.faviconextractor.com/favicon/www.gamer520.com"
+        },
+        {
+          "id": "site-1789023848992",
+          "name": "switch游戏",
+          "url": "https://www.switchyx.com",
+          "description": "",
+          "icon": "/sitelogo/www.switchyx.com.ico"
         }
       ]
     },
@@ -151,13 +158,6 @@ export const mockData = {
       "name": "网盘资源",
       "order": 5,
       "sites": [
-        {
-          "id": "site-1775384047825",
-          "name": "聚盘搜",
-          "url": "https://www.panso567.com/",
-          "description": "7大网盘聚合搜索。",
-          "icon": "https://www.faviconextractor.com/favicon/www.panso567.com"
-        },
         {
           "id": "site-1775281120003",
           "name": "秒搜鸭",
@@ -171,13 +171,6 @@ export const mockData = {
           "url": "https://iui.su/3702/",
           "description": "迅雷修复版",
           "icon": "https://www.faviconextractor.com/favicon/iui.su"
-        },
-        {
-          "id": "site-1775272372014",
-          "name": "磁力下载",
-          "url": "https://wuqianvc.top/",
-          "description": "吴签磁力。",
-          "icon": "https://www.faviconextractor.com/favicon/wuqianvc.top"
         },
         {
           "id": "site-1777336433325",
@@ -396,10 +389,32 @@ export const mockData = {
       ]
     },
     {
+      "id": "category-1789023175530",
+      "icon": "📈",
+      "name": "投资金融",
+      "order": 10,
+      "sites": [
+        {
+          "id": "site-1789023213817",
+          "name": "大盘云图",
+          "url": "https://52etf.site/",
+          "description": "",
+          "icon": "/sitelogo/52etf.site.ico"
+        },
+        {
+          "id": "site-1789023260490",
+          "name": "大A地图",
+          "url": "https://www.bigamap.cn/app",
+          "description": "",
+          "icon": "/sitelogo/www.bigamap.cn.ico"
+        }
+      ]
+    },
+    {
       "id": "category-1780751961419",
       "icon": "🧭",
       "name": "生活常用",
-      "order": 10,
+      "order": 11,
       "sites": [
         {
           "id": "site-1780752011188",
