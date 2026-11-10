@@ -19,13 +19,6 @@ export const mockData = {
           "url": "https://wx.mail.qq.com/?cancel_login=true&from=get_ticket_fail",
           "description": "",
           "icon": "https://www.faviconextractor.com/favicon/wx.mail.qq.com"
-        },
-        {
-          "id": "site-1775386914855",
-          "name": "文件快速分享",
-          "url": "http://4275.com/",
-          "description": "文件快速分享下载。",
-          "icon": "https://www.faviconextractor.com/favicon/4275.com"
         }
       ]
     },
@@ -35,13 +28,6 @@ export const mockData = {
       "name": "阅读资源",
       "order": 1,
       "sites": [
-        {
-          "id": "site-1780807815101",
-          "name": "知轩藏书备份",
-          "url": "https://zxcs.dmnb.cf/",
-          "description": "知轩藏书备份",
-          "icon": "https://www.faviconextractor.com/favicon/zxcs.dmnb.cf"
-        },
         {
           "id": "site-1775272547308",
           "name": "Z-library",
@@ -83,7 +69,7 @@ export const mockData = {
     {
       "id": "category-1775270594689",
       "icon": "music",
-      "name": "音乐资源",
+      "name": "音乐下载",
       "order": 3,
       "sites": [
         {
@@ -99,13 +85,6 @@ export const mockData = {
           "url": "https://xmwav.net/",
           "description": "熊猫无损音乐下载网。",
           "icon": "https://www.faviconextractor.com/favicon/xmwav.net"
-        },
-        {
-          "id": "site-1775270902573",
-          "name": "1music",
-          "url": "https://1music.cc/zh-CN",
-          "description": "flac下载，略卡。",
-          "icon": "https://www.faviconextractor.com/favicon/1music.cc"
         },
         {
           "id": "site-1775271933367",
@@ -173,11 +152,11 @@ export const mockData = {
           "icon": "https://www.faviconextractor.com/favicon/iui.su"
         },
         {
-          "id": "site-1777336433325",
-          "name": "BUS",
-          "url": "https://www.cdn--bus.cyou/",
-          "description": "",
-          "icon": ""
+          "id": "site-1775386914855",
+          "name": "文件快速分享",
+          "url": "http://4275.com/",
+          "description": "文件快速分享下载。",
+          "icon": "https://www.faviconextractor.com/favicon/4275.com"
         }
       ]
     },
@@ -424,6 +403,16 @@ export const mockData = {
           "icon": "https://www.faviconextractor.com/favicon/drug.ptger.cn"
         }
       ]
+    },
+    {
+      "id": "category-1794279193183",
+      "sites": [],
+      "icon": "bulb",
+      "name": "其他",
+      "order": 12,
+      "private": true,
+      "lock": "v1.WAvk0HNpAumqcwhjyksl7Q==.TOl0IJMpDvg8xFEt.UMKT+vbf3JW89ObxQWYu6GcywJeecp5hg0eXkZsgvi8bNiyRrrzmUjpEZRImU74nKbLe0W8GXWe/WyZ3nOeueZAQ6gB2ePlc8fMqqz6ULVNf1nX/82rFUracIU1ykITdLt0z8l8EbGnaiTmJhYFzAiz1vkNy9h12GH53Z77mwYGzTlYRe5W42+Z/IVgrGw4Z8zfzSO3Umi+4baGuHGf459mMhOr5kRpInn0B1hprjUYc8gGUw+xKdXMaUVLq6e9H4/K9ZVB6SRESphziKjfMa+eyB+XtYBvFxg==",
+      "count": 2
     }
   ],
   "title": "琴心剑魄。",
@@ -431,5 +420,6 @@ export const mockData = {
   "footer": {
     "text": "愿逐月华流照君",
     "url": "https://blog.sherry.dpdns.org/"
-  }
+  },
+  "_fileSha": "ae06225cbd3f59987b1d83791959a87f16b185ef"
 }
