@@ -417,9 +417,9 @@ export const mockData = {
   ],
   "title": "琴心剑魄。",
   "search": "bing",
+  "logo": "/logo.png",
   "footer": {
     "text": "愿逐月华流照君",
     "url": "https://blog.sherry.dpdns.org/"
-  },
-  "_fileSha": "ae06225cbd3f59987b1d83791959a87f16b185ef"
+  }
 }

@@ -96,7 +96,11 @@ export function useGitHubAPI() {
   // Save categories to GitHub
   const saveCategoriesToGitHub = async (data) => {
     const currentFile = await getFileContent('src/mock/mock_data.js')
-    const formattedData = JSON.stringify(data, null, 2)
+    // 剥掉前端内部字段（_fileSha 等）：它们只用于本地状态，写进仓库会变成脏数据
+    const clean = Object.fromEntries(
+      Object.entries(data || {}).filter(([k]) => !k.startsWith('_'))
+    )
+    const formattedData = JSON.stringify(clean, null, 2)
     const newContent = `export const mockData = ${formattedData}\n`
     const message = `chore: 更新导航数据 - ${new Date().toLocaleString('zh-CN')}`
 

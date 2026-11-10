@@ -27,7 +27,14 @@
     <!-- 左侧边栏 -->
     <aside class="sidebar">
       <div class="logo-section">
-        <svg class="logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <img
+          v-if="logo && !logoBroken"
+          class="logo logo-img"
+          :src="logo"
+          alt=""
+          @error="logoBroken = true"
+        />
+        <svg v-else class="logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
           <defs>
             <linearGradient id="navLogoGrad" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stop-color="#6f9bf5" />
@@ -65,6 +72,25 @@
         </ul>
       </nav>
 
+      <!-- 每日一句：在线取，失败有兜底，不会留空 -->
+      <div class="daily-quote" :class="{ 'is-loading': quoteLoading }">
+        <button
+          type="button"
+          class="dq-refresh"
+          :disabled="quoteLoading"
+          title="换一句"
+          aria-label="换一句"
+          @click="loadQuote"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" />
+            <path d="M20.5 4.5V10H15" />
+          </svg>
+        </button>
+        <p class="dq-text">{{ quote.text }}</p>
+        <p v-if="quote.from" class="dq-from">{{ quote.from }}</p>
+      </div>
+
       <!-- 底部链接：文案与地址都可在后台改 -->
       <div class="sidebar-footer">
         <a
@@ -88,25 +114,32 @@
     <!-- 右侧主内容区 -->
     <main class="main-content">
       <header class="search-header">
-        <div class="search-box">
+        <div class="head-wrap">
+          <div class="m-brand mobile-only">
+            <img v-if="logo && !logoBroken" :src="logo" alt="" @error="logoBroken = true" />
+            <svg v-else viewBox="0 0 48 48" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="mLogoGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#6f9bf5" />
+                  <stop offset="1" stop-color="#3b6fd8" />
+                </linearGradient>
+                <mask id="mLogoMask">
+                  <rect width="48" height="48" fill="#000" />
+                  <circle cx="23" cy="25" r="9.2" fill="#fff" />
+                  <circle cx="27.6" cy="21" r="7.6" fill="#000" />
+                </mask>
+              </defs>
+              <rect width="48" height="48" rx="14" fill="url(#mLogoGrad)" />
+              <rect width="48" height="48" rx="14" fill="#fff" opacity=".95" mask="url(#mLogoMask)" />
+            </svg>
+          </div>
+          <div class="search-box">
           <span class="s-ico">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <circle cx="10.8" cy="10.8" r="6.6" />
               <path d="M15.6 15.6L20.4 20.4" />
             </svg>
           </span>
-
-          <!-- 只保留 Bing / 百度，点一下切换 -->
-          <div class="engine-switch" role="group" aria-label="选择搜索引擎">
-            <button
-              v-for="e in engineList"
-              :key="e.key"
-              type="button"
-              class="eng-chip"
-              :class="{ active: selectedEngine === e.key }"
-              @click="selectedEngine = e.key"
-            >{{ e.label }}</button>
-          </div>
 
           <input
             ref="searchInputEl"
@@ -123,7 +156,45 @@
               <path d="M7 7l10 10M17 7L7 17" />
             </svg>
           </button>
-          <span v-else class="search-kbd" aria-hidden="true"><kbd>/</kbd></span>
+
+          <!-- 搜索引擎：收成右侧一个下拉，不再平铺 -->
+          <div class="engine-pick" ref="enginePickEl">
+            <button
+              type="button"
+              class="eng-trigger"
+              :class="{ open: engineOpen }"
+              :aria-expanded="engineOpen"
+              aria-haspopup="listbox"
+              @click.stop="engineOpen = !engineOpen"
+            >
+              <span class="eng-label">{{ currentEngine.label }}</span>
+              <svg class="eng-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            <transition name="eng-pop">
+              <div v-if="engineOpen" class="eng-menu" role="listbox">
+                <button
+                  v-for="e in engineList"
+                  :key="e.key"
+                  type="button"
+                  class="eng-opt"
+                  :class="{ on: selectedEngine === e.key }"
+                  role="option"
+                  :aria-selected="selectedEngine === e.key"
+                  @click="pickEngine(e.key)"
+                >
+                  <span>{{ e.label }}</span>
+                  <svg v-if="selectedEngine === e.key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                  </svg>
+                </button>
+              </div>
+            </transition>
+          </div>
+
+          <span v-if="!searchQuery" class="search-kbd" aria-hidden="true"><kbd>/</kbd></span>
         </div>
 
         <div class="head-right">
@@ -156,6 +227,7 @@
               <path d="M3 7h18M3 12h18M3 17h18" />
             </svg>
           </button>
+          </div>
         </div>
 
         <!-- 移动端分类抽屉 -->
@@ -182,6 +254,25 @@
               <span v-if="category.private" class="cat-lock" v-html="iconSvg('lock')"></span>
             </li>
           </ul>
+
+          <!-- 手机端抽屉底部也放一句，不然这个功能在手机上完全看不到 -->
+          <div class="daily-quote mobile-quote" :class="{ 'is-loading': quoteLoading }">
+            <button
+              type="button"
+              class="dq-refresh"
+              :disabled="quoteLoading"
+              title="换一句"
+              aria-label="换一句"
+              @click="loadQuote"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" />
+                <path d="M20.5 4.5V10H15" />
+              </svg>
+            </button>
+            <p class="dq-text">{{ quote.text }}</p>
+            <p v-if="quote.from" class="dq-from">{{ quote.from }}</p>
+          </div>
         </div>
         <div class="mobile-menu-overlay" :class="{ active: showMobileMenu }" @click="closeMobileMenu"></div>
       </header>
@@ -314,14 +405,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useNavigation } from '@/apis/useNavigation.js'
 import { useThemeStore } from '@/stores/counter.js'
 import { iconSvg } from '@/utils/icons.js'
 import { fetchWeather, weatherIcon, weatherText, WEATHER_LOCATION } from '@/utils/weather.js'
+import { fetchQuote, FALLBACK_QUOTE } from '@/utils/quote.js'
 import { isSealed, openSealed } from '@/utils/secret.js'
 
-const { categories, title, footer, icpNumber, defaultSearchEngine, loading, error, fetchCategories } = useNavigation()
+const { categories, title, footer, icpNumber, logo, defaultSearchEngine, loading, error, fetchCategories } = useNavigation()
+
+// 后台传过 Logo 就用图片，图片挂了或没设置就退回内置 SVG
+const logoBroken = ref(false)
+watch(logo, () => { logoBroken.value = false })
 const themeStore = useThemeStore()
 
 const loc = WEATHER_LOCATION
@@ -334,9 +430,40 @@ const engineList = [
 const searchQuery = ref('')
 const selectedEngine = ref('bing')
 const searchInputEl = ref(null)
+const engineOpen = ref(false)
+const enginePickEl = ref(null)
 const currentEngine = computed(
   () => engineList.find((e) => e.key === selectedEngine.value) || engineList[0]
 )
+
+const pickEngine = (key) => {
+  selectedEngine.value = key
+  engineOpen.value = false
+  searchInputEl.value?.focus()
+}
+
+// 点空白处收起引擎下拉
+const onDocClick = (e) => {
+  if (!engineOpen.value) return
+  if (enginePickEl.value && !enginePickEl.value.contains(e.target)) engineOpen.value = false
+}
+
+/* ── 每日一句（在线取，失败用兜底） ── */
+const quote = ref({ text: FALLBACK_QUOTE.text, from: FALLBACK_QUOTE.from })
+const quoteLoading = ref(false)
+let quoteSeq = 0
+
+const loadQuote = async () => {
+  const seq = ++quoteSeq
+  quoteLoading.value = true
+  try {
+    const q = await fetchQuote(quote.value.text)
+    if (seq !== quoteSeq) return
+    quote.value = { text: q.text, from: q.from }
+  } finally {
+    if (seq === quoteSeq) quoteLoading.value = false
+  }
+}
 
 const filteredCategories = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -576,6 +703,7 @@ const onGlobalKeydown = (e) => {
 onMounted(async () => {
   checkLockStatus()
   window.addEventListener('keydown', onGlobalKeydown)
+  document.addEventListener('click', onDocClick)
   await fetchCategories()
   selectedEngine.value = defaultSearchEngine.value
 
@@ -586,6 +714,8 @@ onMounted(async () => {
   loadWeather()
   weatherTimer = setInterval(loadWeather, 30 * 60 * 1000)
 
+  loadQuote()
+
   await nextTick()
   activeCategory.value = categories.value[0]?.id || ''
   const container = document.querySelector('.content-area')
@@ -595,6 +725,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onGlobalKeydown)
+  document.removeEventListener('click', onDocClick)
   if (clockTimer) clearInterval(clockTimer)
   if (weatherTimer) clearInterval(weatherTimer)
   document.body.style.overflow = ''
@@ -604,6 +735,28 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* 移动端顶栏的站点标识（桌面端侧边栏已有 Logo） */
+.m-brand {
+  display: none;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.m-brand img,
+.m-brand svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+@media (max-width: 860px) {
+  .m-brand {
+    display: block;
+  }
+}
+
 /* ── 全站锁定页 ── */
 .lock-container {
   display: flex;
@@ -700,7 +853,7 @@ onUnmounted(() => {
 
 /* ── 侧边栏 ── */
 .sidebar {
-  width: 224px;
+  width: 240px;
   flex-shrink: 0;
   height: 100vh;
   display: flex;
@@ -723,6 +876,10 @@ onUnmounted(() => {
   flex-shrink: 0;
   box-shadow: 0 4px 12px -4px rgba(59, 130, 246, 0.55);
 }
+.logo-img {
+  object-fit: cover;
+  background: #fff;
+}
 .site-title {
   margin: 0;
   font-size: 16.5px;
@@ -738,7 +895,7 @@ onUnmounted(() => {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 10px 14px;
+  padding: 12px 12px 14px;
   scrollbar-width: none;
 }
 .category-nav::-webkit-scrollbar {
@@ -750,16 +907,16 @@ onUnmounted(() => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 .category-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 9px;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 9px;
+  gap: 11px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
   cursor: pointer;
   color: var(--sidebar-text);
   transition: background-color 0.16s ease, color 0.16s ease;
@@ -789,8 +946,9 @@ onUnmounted(() => {
 .category-item .category-name {
   flex: 1;
   min-width: 0;
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 500;
+  letter-spacing: 0.1px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -799,19 +957,19 @@ onUnmounted(() => {
   font-weight: 600;
 }
 
-/* 图标容器：统一 20px 网格，颜色跟随文字 */
+/* 图标容器：统一 22px 网格，颜色跟随文字 */
 .cat-ico {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   opacity: 0.9;
 }
 .cat-ico :deep(svg) {
-  width: 17px;
-  height: 17px;
+  width: 18.5px;
+  height: 18.5px;
 }
 .cat-ico :deep(.soft) {
   opacity: 0.5;
@@ -842,9 +1000,90 @@ onUnmounted(() => {
   height: 12px;
 }
 
+/* ── 每日一句：填掉侧边栏底部空白，做成一张浅诗签 ── */
+.daily-quote {
+  position: relative;
+  flex-shrink: 0;
+  margin: 0 12px 8px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--sidebar-line);
+  border-radius: 12px;
+  background: linear-gradient(155deg, rgba(111, 155, 245, 0.13), rgba(111, 155, 245, 0.02) 72%);
+  transition: border-color 0.2s ease;
+}
+.daily-quote:hover {
+  border-color: rgba(157, 192, 255, 0.28);
+}
+.dq-text {
+  margin: 0;
+  font-size: 11.8px;
+  line-height: 1.8;
+  letter-spacing: 0.2px;
+  text-wrap: pretty;
+  color: #c3d2e6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+.daily-quote.is-loading .dq-text {
+  opacity: 0.45;
+}
+.dq-from {
+  margin: 8px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  color: #7d90a8;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dq-refresh {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #7d90a8;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+.dq-refresh svg {
+  width: 13px;
+  height: 13px;
+}
+.daily-quote:hover .dq-refresh,
+.dq-refresh:focus-visible {
+  opacity: 1;
+}
+.dq-refresh:hover {
+  background: rgba(157, 192, 255, 0.14);
+  color: #c3d2e6;
+}
+.dq-refresh:disabled {
+  cursor: default;
+  animation: dqSpin 0.9s linear infinite;
+}
+@keyframes dqSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .sidebar-footer {
   flex-shrink: 0;
-  padding: 12px 10px 14px;
+  padding: 12px 12px 14px;
   border-top: 1px solid var(--sidebar-line);
 }
 .side-foot-link {
@@ -895,32 +1134,40 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 100;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 24px;
+  padding: 14px 28px;
   background: var(--surface-translucent);
   backdrop-filter: saturate(1.6) blur(14px);
   -webkit-backdrop-filter: saturate(1.6) blur(14px);
   border-bottom: 1px solid var(--line);
 }
 
+/* 与 .categories-container 同宽同中心，搜索框才会和下方内容左基线对齐 */
+.head-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* 靠左、与下方内容区同一条左基线（24px→28px padding 对齐 .content-area） */
 .search-box {
   position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1;
+  flex: 0 1 620px;
   min-width: 0;
-  max-width: 700px;
-  height: 46px;
-  margin: 0 auto;
-  padding: 0 10px 0 13px;
+  max-width: 620px;
+  height: 48px;
+  margin: 0;
+  padding: 0 8px 0 14px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: 14px;
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .search-box:hover {
   border-color: var(--border-strong);
@@ -943,37 +1190,96 @@ onUnmounted(() => {
   color: var(--accent);
 }
 
-.engine-switch {
+/* 搜索引擎下拉：右侧一个胶囊，点开选 */
+.engine-pick {
+  position: relative;
+  flex-shrink: 0;
+}
+.eng-trigger {
   display: flex;
   align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  padding: 3px;
+  gap: 3px;
+  height: 32px;
+  padding: 0 8px 0 11px;
+  border: none;
   border-radius: 9px;
   background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
 }
-.eng-chip {
-  height: 26px;
-  padding: 0 10px;
+.eng-trigger:hover {
+  background: var(--surface-3);
+  color: var(--ink-1);
+}
+.eng-trigger.open {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.eng-chev {
+  width: 13px;
+  height: 13px;
+  transition: transform 0.18s ease;
+}
+.eng-trigger.open .eng-chev {
+  transform: rotate(180deg);
+}
+.eng-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  min-width: 118px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.eng-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  height: 32px;
+  padding: 0 9px;
   border: none;
   border-radius: 7px;
   background: transparent;
   color: var(--ink-2);
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
+  font-size: 12.5px;
+  text-align: left;
   cursor: pointer;
-  transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  transition: background-color 0.14s ease, color 0.14s ease;
 }
-.eng-chip:hover {
+.eng-opt:hover {
+  background: var(--surface-2);
   color: var(--ink-1);
 }
-.eng-chip.active {
-  background: var(--surface);
+.eng-opt.on {
   color: var(--accent);
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+.eng-opt svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.eng-pop-enter-active,
+.eng-pop-leave-active {
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.eng-pop-enter-from,
+.eng-pop-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
 }
 
 .search-input {
@@ -1038,79 +1344,83 @@ onUnmounted(() => {
 .head-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .clock {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 26px;
   flex-shrink: 0;
-  padding-right: 14px;
+  padding-right: 18px;
   border-right: 1px solid var(--line);
 }
 .c-col {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  line-height: 1.15;
+  gap: 3px;
+  line-height: 1.1;
   white-space: nowrap;
 }
 .c-time {
-  font-size: 15px;
-  font-weight: 650;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--ink-1);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.4px;
+  letter-spacing: -0.3px;
 }
 .c-date {
-  font-size: 10.5px;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--ink-3);
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
 .c-wx {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  line-height: 1.15;
+  gap: 3px;
+  line-height: 1.1;
   white-space: nowrap;
   cursor: default;
 }
 .c-wx-top {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 .wx-ico {
   display: inline-flex;
   color: var(--accent);
 }
 .wx-ico :deep(svg) {
-  width: 17px;
-  height: 17px;
+  width: 22px;
+  height: 22px;
 }
 .c-temp {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 650;
   color: var(--ink-1);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.2px;
 }
 .c-city {
-  font-size: 10.5px;
+  font-size: 11.5px;
+  font-weight: 500;
   color: var(--ink-3);
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
 
 .icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 11px;
   background: var(--surface);
   color: var(--ink-2);
   cursor: pointer;
@@ -1187,6 +1497,26 @@ onUnmounted(() => {
   margin: 0;
   padding: 8px;
   overflow-y: auto;
+}
+.mobile-quote {
+  margin: 6px 10px 12px;
+  flex-shrink: 0;
+  border-color: var(--line);
+  background: var(--accent-soft);
+}
+.mobile-quote .dq-text {
+  color: var(--ink-2);
+}
+.mobile-quote .dq-from {
+  color: var(--ink-3);
+}
+.mobile-quote .dq-refresh {
+  opacity: 1;
+  color: var(--ink-3);
+}
+.mobile-quote .dq-refresh:hover {
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--accent);
 }
 .mobile-category-item {
   display: flex;
@@ -1326,14 +1656,14 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 .category-section {
-  margin-bottom: 34px;
+  margin-bottom: 38px;
   scroll-margin-top: 86px;
 }
 .category-title {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: 0 0 13px;
+  margin: 0 0 14px;
   font-size: 15px;
   font-weight: 650;
   letter-spacing: 0.2px;
@@ -1570,7 +1900,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 13px;
+  min-height: 68px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 13px;
   background: var(--surface);
@@ -1620,8 +1951,8 @@ onUnmounted(() => {
 .site-icon {
   position: relative;
   z-index: 1;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1661,10 +1992,10 @@ onUnmounted(() => {
   min-width: 0;
 }
 .site-name {
-  margin: 0 0 2px;
-  font-size: 13.8px;
-  font-weight: 600;
-  letter-spacing: 0.1px;
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.05px;
   color: var(--ink-1);
   white-space: nowrap;
   overflow: hidden;
@@ -1672,8 +2003,10 @@ onUnmounted(() => {
 }
 .site-description {
   margin: 0;
-  font-size: 11.8px;
+  font-size: 11.5px;
+  font-weight: 400;
   line-height: 1.45;
+  letter-spacing: 0.2px;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
@@ -1739,8 +2072,10 @@ onUnmounted(() => {
     grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
   }
   .search-header {
-    gap: 10px;
-    padding: 12px 18px;
+    padding: 12px 22px;
+  }
+  .head-wrap {
+    gap: 12px;
   }
   .clock {
     gap: 12px;
@@ -1770,23 +2105,34 @@ onUnmounted(() => {
     left: 0;
     right: 0;
     padding: 9px 12px;
+  }
+  .head-wrap {
     gap: 8px;
   }
   .search-box {
+    flex: 1 1 auto;
     max-width: none;
-    height: 42px;
+    height: 44px;
     margin: 0;
-    padding: 0 8px 0 9px;
+    padding: 0 7px 0 12px;
     gap: 7px;
+    border-radius: 12px;
   }
   .s-ico,
   .search-kbd {
     display: none;
   }
-  .eng-chip {
-    height: 24px;
-    padding: 0 8px;
-    font-size: 11.5px;
+  .eng-trigger {
+    height: 30px;
+    padding: 0 6px 0 9px;
+    font-size: 12px;
+  }
+  .eng-chev {
+    width: 12px;
+    height: 12px;
+  }
+  .eng-menu {
+    min-width: 104px;
   }
   .search-input {
     font-size: 13.5px;
@@ -1799,16 +2145,17 @@ onUnmounted(() => {
     padding-right: 8px;
   }
   .c-time {
-    font-size: 13px;
+    font-size: 14px;
+    letter-spacing: 0;
   }
   .c-date,
   .c-wx {
     display: none;
   }
   .icon-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
   }
   .mobile-only {
     display: flex;

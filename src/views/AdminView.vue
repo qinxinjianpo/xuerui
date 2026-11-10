@@ -1,754 +1,652 @@
 <template>
-  <div class="admin-container">
-    <!-- 登录界面 -->
-    <div v-if="!isAuthenticated" class="login-container">
-      <div class="login-box">
-        <h1>🔐 管理员登录</h1>
-        <form @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label for="password">管理密钥:</label>
-            <input
-              id="password"
-              type="password"
-              v-model="loginPassword"
-              placeholder="请输入管理密钥"
-              required
-              class="form-input"
-            />
-          </div>
-          <button type="submit" class="login-btn" :disabled="loading">
-            {{ loading ? '验证中...' : '登录' }}
-          </button>
-        </form>
-        <div v-if="loginError" class="error-message">
-          {{ loginError }}
+  <div class="ad">
+    <!-- ── 登录 ── -->
+    <div v-if="!ready" class="login">
+      <form class="login-card" @submit.prevent="doLogin">
+        <div class="login-logo">
+          <UiIcon name="sparkles" :size="24" />
         </div>
-      </div>
+        <h1>导航站管理</h1>
+        <p class="login-sub">输入管理密钥进入后台</p>
+
+        <label class="login-fld">
+          <UiIcon name="key" :size="16" />
+          <input
+            v-model="pwd"
+            type="password"
+            placeholder="管理密钥"
+            autocomplete="current-password"
+            autofocus
+            required
+          />
+        </label>
+
+        <p v-if="loginErr" class="login-err">{{ loginErr }}</p>
+
+        <button type="submit" class="login-btn" :disabled="busy">
+          {{ busy ? '验证中…' : '进入后台' }}
+        </button>
+
+        <button type="button" class="login-back" @click="$router.push('/')">← 返回前台</button>
+      </form>
     </div>
 
-    <!-- 管理界面 -->
-    <div v-else class="admin-dashboard">
-      <!-- 顶部导航 -->
-      <header class="admin-header">
-        <div class="header-content">
-          <h1>🛠️ 导航站管理</h1>
-          <div class="header-actions">
-            <button @click="emergencyReset" class="emergency-btn" hidden="true">🚨 紧急重置</button>
-            <button @click="debugLoadData" class="debug-btn" hidden="true">🔍 调试加载</button>
-            <span class="user-info">管理员</span>
-            <button @click="logout" class="logout-btn">退出</button>
+    <!-- ── 后台 ── -->
+    <template v-else>
+      <header class="bar">
+        <div class="bar-inner">
+          <div class="brand">
+            <span class="brand-ico"><UiIcon name="settings" :size="17" /></span>
+            <span class="brand-txt">导航站管理</span>
+            <span v-if="dirty" class="brand-dot" title="有未保存的改动">未保存</span>
+          </div>
+
+          <nav class="tabs">
+            <button
+              type="button"
+              class="tab"
+              :class="{ on: tab === 'edit' }"
+              @click="tab = 'edit'"
+            >
+              <UiIcon name="layers" :size="15" />
+              内容
+            </button>
+            <button
+              type="button"
+              class="tab"
+              :class="{ on: tab === 'config' }"
+              @click="tab = 'config'"
+            >
+              <UiIcon name="sliders" :size="15" />
+              设置
+            </button>
+          </nav>
+
+          <div class="bar-right">
+            <a class="bar-link" href="/" target="_blank" rel="noopener">预览 ↗</a>
+            <button type="button" class="bar-btn" @click="logout">退出</button>
+            <button type="button" class="save-btn" :disabled="saving || !dirty" @click="save">
+              <UiIcon v-if="!saving" name="download" :size="15" />
+              <span class="spin" v-else></span>
+              {{ saving ? '保存中…' : dirty ? '保存到 GitHub' : '已是最新' }}
+            </button>
           </div>
         </div>
       </header>
 
-      <!-- 主要内容 -->
-      <main class="admin-main">
-        <!-- 加载状态显示 -->
-        <div v-if="loading" class="loading-overlay">
-          <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p>正在加载数据...</p>
-            <button @click="skipLoading" class="skip-loading-btn">跳过加载</button>
-          </div>
+      <main class="body">
+        <div v-if="loading" class="skeleton">
+          <div class="sk-side"></div>
+          <div class="sk-main"><div class="sk-line"></div><div class="sk-line short"></div><div class="sk-line"></div></div>
         </div>
 
-        <div class="admin-tabs">
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'categories' }"
-            @click="activeTab = 'categories'"
-          >
-            📁 分类管理
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'sites' }"
-            @click="switchToSiteTab"
-          >
-            🌐 站点管理
-          </button>
-          <button
-            class="tab-btn"
-            :class="{ active: activeTab === 'settings' }"
-            @click="activeTab = 'settings'"
-          >
-            ⚙️ 系统设置
-          </button>
-        </div>
+        <Workspace
+          v-else-if="tab === 'edit'"
+          :w="ws"
+          v-model:activeId="activeId"
+          @toast="showToast"
+        />
 
-        <!-- 分类管理 -->
-        <div v-if="activeTab === 'categories'" class="tab-content">
-          <CategoryManager
-            :categories="categories"
-            @update="handleCategoriesUpdate"
-            @save="saveToGitHub"
-            @viewSites="switchToSiteManager"
-            :loading="saving"
-          />
-        </div>
-
-        <!-- 站点管理 -->
-        <div v-if="activeTab === 'sites'" class="tab-content">
-          <SiteManager
-            :categories="categories"
-            :initialSelectedCategoryId="selectedCategoryId"
-            @update="handleCategoriesUpdate"
-            @save="saveToGitHub"
-            :loading="saving"
-          />
-        </div>
-
-        <!-- 系统设置 -->
-        <div v-if="activeTab === 'settings'" class="tab-content">
-          <SystemSettings />
-        </div>
+        <Settings
+          v-else
+          ref="settingsEl"
+          :model="settingsModel"
+          @dirty="onSettingsDirty"
+          @logo="onLogoPick"
+        />
       </main>
-    </div>
+    </template>
 
-    <!-- 自定义弹框 -->
-    <CustomDialog
-      :visible="dialogVisible"
-      :type="dialogType"
-      :title="dialogTitle"
-      :message="dialogMessage"
-      :details="dialogDetails"
-      @close="closeDialog"
-      @confirm="closeDialog"
-    />
+    <!-- 轻提示 -->
+    <transition name="toast">
+      <div v-if="toast" class="toast" :class="toast.type">{{ toast.text }}</div>
+    </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import CategoryManager from '../components/admin/CategoryManager.vue'
-import SiteManager from '../components/admin/SiteManager.vue'
-import SystemSettings from '../components/admin/SystemSettings.vue'
-import CustomDialog from '../components/admin/CustomDialog.vue'
+import { mockData } from '../mock/mock_data.js'
 import { useGitHubAPI, setAuthToken, clearAuthToken } from '../apis/useGitHubAPI.js'
-import { sealJson } from '../utils/secret.js'
-import { vaultSession } from '../utils/vaultSession.js'
+import { useWorkspace } from '../utils/workspace.js'
+
+import UiIcon from '../components/admin/UiIcon.vue'
+import Workspace from '../components/admin/Workspace.vue'
+import Settings from '../components/admin/Settings.vue'
 
 const router = useRouter()
-const { saveCategoriesToGitHub, loadCategoriesFromGitHub } = useGitHubAPI()
 
-// 认证状态
-const isAuthenticated = ref(false)
-const loginPassword = ref('')
-const loginError = ref('')
+const { loadCategoriesFromGitHub, saveCategoriesToGitHub, uploadBinaryFile } = useGitHubAPI()
+
+const ready = ref(false)
+const pwd = ref('')
+const loginErr = ref('')
+const busy = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 
-// 管理界面状态
-const activeTab = ref('categories')
-const categories = ref([])
-const navTitle = ref('猫猫导航') // 保存网站标题
-const selectedCategoryId = ref('') // 用于站点管理的选中分类
+const tab = ref('edit')
+const activeId = ref('')
 
-// 紧急兜底：如果5秒后loading还是true，强制重置
-setTimeout(() => {
-  if (loading.value) {
-    console.warn('检测到loading状态异常，强制重置')
-    loading.value = false
-    // 确保至少有基本数据
-    if (categories.value.length === 0) {
-      categories.value = [
-        {
-          id: 'default',
-          name: '默认分类',
-          icon: '📁',
-          order: 0,
-          sites: []
-        }
-      ]
-    }
-  }
-}, 5000)
+// 初始数据：先用源码里的 mock（部署后就是最新），登录后再尝试从 GitHub 取更新的
+const ws = useWorkspace(mockData.categories || [])
+const dirty = ws.dirty
 
-// 自定义弹框状态
-const dialogVisible = ref(false)
-const dialogType = ref('success')
-const dialogTitle = ref('')
-const dialogMessage = ref('')
-const dialogDetails = ref([])
+const settingsModel = reactive({
+  title: mockData.title || '',
+  search: mockData.search || 'bing',
+  footer: mockData.footer || { text: '', url: '' },
+  logo: mockData.logo || '/logo.png'
+})
 
-// 验证管理员密钥（通过服务端验证）
-const handleLogin = async () => {
-  loading.value = true
-  loginError.value = ''
+const settingsEl = ref(null)
+const pendingLogo = ref(null)
 
+const onSettingsDirty = (msg) => {
+  dirty.value = true
+  if (typeof msg === 'string' && msg) showToast(msg, 'warn')
+}
+
+const onLogoPick = (file) => {
+  pendingLogo.value = file
+}
+
+/* ── 登录 ── */
+const doLogin = async () => {
+  busy.value = true
+  loginErr.value = ''
   try {
-    const response = await fetch('/api/verify', {
+    const res = await fetch('/api/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: loginPassword.value }),
+      body: JSON.stringify({ password: pwd.value })
     })
+    const result = await res.json()
+    if (!result.success) throw new Error(result.error || '密钥不对')
 
-    const result = await response.json()
-
-    if (!result.success) {
-      throw new Error(result.error || '验证失败')
-    }
-
-    // Store auth token and mark as authenticated
     setAuthToken(result.token)
-    isAuthenticated.value = true
     localStorage.setItem('admin_authenticated', 'true')
-
-    // Load data after login
-    setTimeout(async () => {
-      try {
-        await loadCategories()
-      } catch (error) {
-        console.error('登录后数据加载失败:', error)
-        loading.value = false
-      }
-    }, 500)
-  } catch (error) {
-    loginError.value = error.message
+    ready.value = true
+    activeId.value = ws.categories.value[0]?.id || ''
+    refreshFromGitHub()
+  } catch (e) {
+    loginErr.value = e.message || '验证失败'
   } finally {
-    if (!isAuthenticated.value) {
-      loading.value = false
-    }
+    busy.value = false
   }
 }
 
-// 退出登录
+/** 登录后静默拉一次仓库数据，有更新的直接替换（失败就继续用源码里的） */
+const refreshFromGitHub = async () => {
+  loading.value = true
+  try {
+    const remote = await loadCategoriesFromGitHub()
+    if (!remote?.categories) throw new Error('格式不对')
+    ws.reload(remote.categories)
+    settingsModel.title = remote.title || settingsModel.title
+    settingsModel.search = remote.search === 'baidu' ? 'baidu' : 'bing'
+    settingsModel.footer = remote.footer || settingsModel.footer
+    settingsModel.logo = remote.logo || ''
+    settingsEl.value?.setLogoPath(settingsModel.logo)
+    activeId.value = ws.categories.value[0]?.id || ''
+  } catch {
+    // 拉不到就用源码里的数据，不打断操作
+  } finally {
+    loading.value = false
+  }
+}
+
 const logout = () => {
-  isAuthenticated.value = false
-  localStorage.removeItem('admin_authenticated')
   clearAuthToken()
-  loginPassword.value = ''
+  localStorage.removeItem('admin_authenticated')
+  ready.value = false
   router.push('/')
 }
 
-// 调试加载数据
-const debugLoadData = async () => {
-  console.log('=== 开始调试加载数据 ===')
+/* ── 保存 ── */
+const save = async () => {
+  if (saving.value) return
 
-  try {
-    console.log('通过代理调用GitHub API...')
-    const data = await loadCategoriesFromGitHub()
-    console.log('调用成功，返回数据:', data)
-
-    showDialog(
-      'success',
-      '🎉 调试成功',
-      '通过代理调用GitHub API成功',
-      [`• 数据类型: ${typeof data}`, `• 包含categories: ${!!data.categories}`, `• 分类数量: ${data.categories?.length || 0}`]
-    )
-  } catch (error) {
-    console.error('调用失败:', error)
-    showDialog(
-      'error',
-      '❌ 调试失败',
-      '调用GitHub API失败',
-      [`• 错误信息: ${error.message}`, `• 错误类型: ${error.constructor.name}`]
-    )
-  }
-}
-
-// 加载分类数据（简化版本，暂时只加载本地数据）
-const loadCategories = async () => {
-  console.log('🔍 开始加载分类数据（简化版本）')
-  loading.value = true
-
-  try {
-    // 直接加载本地数据，避免GitHub API调用
-    const { mockData } = await import('../mock/mock_data.js')
-    categories.value = mockData.categories || []
-    navTitle.value = mockData.title || '猫猫导航'
-    console.log('✅ 本地数据加载成功，分类数量:', categories.value.length)
-  } catch (error) {
-    console.error('❌ 本地数据加载失败:', error)
-    // 最后兜底：使用空数组
-    categories.value = []
-    navTitle.value = '猫猫导航'
-  } finally {
-    // 确保loading状态被重置
-    loading.value = false
-    console.log('🔍 数据加载完成，loading状态重置')
-  }
-}
-
-// 处理分类更新
-const handleCategoriesUpdate = (newCategories) => {
-  categories.value = newCategories
-}
-
-// 切换到站点管理并选中对应分类
-const switchToSiteManager = (categoryId) => {
-  selectedCategoryId.value = categoryId
-  activeTab.value = 'sites'
-}
-
-// 手动切换到站点管理标签
-const switchToSiteTab = () => {
-  selectedCategoryId.value = '' // 清空选中分类，显示所有站点
-  activeTab.value = 'sites'
-}
-
-// 显示弹框
-const showDialog = (type, title, message, details = []) => {
-  dialogType.value = type
-  dialogTitle.value = title
-  dialogMessage.value = message
-  dialogDetails.value = details
-  dialogVisible.value = true
-}
-
-// 关闭弹框
-const closeDialog = () => {
-  dialogVisible.value = false
-}
-
-// 跳过加载
-const skipLoading = async () => {
-  console.log('用户选择跳过加载')
-  loading.value = false
-
-  // 尝试加载本地数据
-  try {
-    const { mockData } = await import('../mock/mock_data.js')
-    categories.value = mockData.categories || []
-    navTitle.value = mockData.title || '猫猫导航'
-    console.log('跳过加载后，使用本地数据:', categories.value.length)
-  } catch (error) {
-    console.error('跳过加载时，本地数据加载失败:', error)
-    // 最基本的兜底数据
-    categories.value = [
-      {
-        id: 'default',
-        name: '默认分类',
-        icon: '📁',
-        order: 0,
-        sites: []
-      }
-    ]
-    navTitle.value = '猫猫导航'
+  const vals = tab.value === 'config' && settingsEl.value ? settingsEl.value.getValues() : null
+  if (settingsEl.value?.footerUrlBad) {
+    showToast('侧边栏链接地址格式不对', 'warn')
+    tab.value = 'config'
+    return
   }
 
-  showDialog(
-    'info',
-    '⏭️ 已跳过加载',
-    '已跳过GitHub数据加载，当前使用本地数据',
-    [`• 分类数量: ${categories.value.length}`, `• 可在系统设置中重新尝试连接GitHub`]
-  )
-}
-
-// 保存到GitHub
-const saveToGitHub = async () => {
   saving.value = true
   try {
-    // 先从 GitHub 加载当前完整数据，保留 search 等其他字段
-    let currentData = {}
+    // 先拿仓库现有数据，保留我们不管的字段
+    let carry = {}
     try {
-      currentData = await loadCategoriesFromGitHub()
-    } catch (error) {
-      console.warn('加载当前数据失败，使用默认值:', error)
+      const cur = await loadCategoriesFromGitHub()
+      const { _fileSha, ...rest } = cur || {}
+      carry = rest
+    } catch {
+      carry = {}
     }
 
-    // 私密分类：内存里可能因为「解锁编辑」躺着明文站点，
-    // 这里统一用会话口令重新加密后再写文件（深拷贝，不动界面上的数据）
-    const cats = JSON.parse(JSON.stringify(categories.value || []))
-    let sealedCount = 0
-    for (const c of cats) {
-      if (!c.private) continue
-      const sites = c.sites || []
-      if (!sites.length) continue
+    const { categories, sealed } = await ws.exportCategories()
 
-      const pwd = vaultSession.get(c.id)
-      if (!pwd) {
-        throw new Error(
-          `分类「${c.name}」有 ${sites.length} 个明文站点，但没有可用口令，无法加密。` +
-          '请编辑该分类、输入口令解锁后再保存。'
-        )
-      }
-      c.lock = await sealJson({ sites }, pwd)
-      c.count = sites.length
-      c.sites = []
-      sealedCount++
+    const meta = vals || {
+      title: settingsModel.title,
+      search: settingsModel.search,
+      footer: settingsModel.footer,
+      logo: settingsModel.logo
     }
 
-    // 展开 currentData 保留 search / footer / 以后新增的字段，只覆盖这两个
+    // Logo：选了新文件就先传，再写路径
+    let logoPath = meta.logo || ''
+    if (pendingLogo.value) {
+      const buf = await pendingLogo.value.arrayBuffer()
+      await uploadBinaryFile('public/logo.png', buf, 'chore: 更新网站 Logo')
+      logoPath = '/logo.png'
+      settingsEl.value?.setLogoPath(logoPath)
+      pendingLogo.value = null
+    }
+
     await saveCategoriesToGitHub({
-      ...currentData,
-      categories: cats,
-      title: navTitle.value
+      ...carry,
+      categories,
+      title: meta.title,
+      search: meta.search,
+      footer: meta.footer,
+      logo: logoPath
     })
-    showDialog(
-      'success',
-      '🎉 保存成功',
-      '您的更改已成功保存到GitHub仓库！',
-      [
-        sealedCount ? `• 已重新加密 ${sealedCount} 个私密分类（站点不会以明文进仓库）` : '',
-        '• 更改将在 2-3 分钟内自动部署到线上',
-        '• 部署完成后，您可以在前台页面看到最新内容',
-        '• 如有问题，请检查Vercel或CFpage是否触发自动部署'
-      ].filter(Boolean)
+
+    // 保存成功后同步本地状态
+    Object.assign(settingsModel, meta, { logo: logoPath })
+    ws.reload(categories.map((c) => ({ ...c, sites: c.sites || [] })))
+    dirty.value = false
+    showToast(
+      sealed
+        ? `已保存，其中 ${sealed} 个私密分类已加密`
+        : '已保存到 GitHub，2-3 分钟后生效'
     )
-  } catch (error) {
-    showDialog(
-      'error',
-      '❌ 保存失败',
-      '保存过程中发生错误，请重试',
-      [`• 错误详情: ${error.message}`]
-    )
+  } catch (e) {
+    showToast(e.message || '保存失败', 'warn')
   } finally {
     saving.value = false
   }
 }
 
-// 紧急重置加载状态
-const emergencyReset = () => {
-  console.log('用户点击紧急重置按钮，强制重置loading状态')
-  loading.value = false
-  // 强制DOM更新，确保loading状态同步到模板
-  setTimeout(() => {
-    console.log('🔍 延迟检查loading状态:', loading.value)
-    console.log('🔍 DOM中loading元素:', document.querySelector('.loading-overlay'))
-    console.log('🔍 DOM中tab按钮:', document.querySelectorAll('.tab-btn'))
+/* ── 提示 ── */
+const toast = ref(null)
+let toastTimer = null
 
-    // 如果loading overlay仍然存在，强制隐藏
-    const loadingOverlay = document.querySelector('.loading-overlay')
-    if (loadingOverlay) {
-      console.warn('🔍 发现loading overlay仍然存在，强制隐藏')
-      loadingOverlay.style.display = 'none'
-    }
-  }, 100)
-  showDialog(
-    'info',
-    '⚠️ 加载状态已重置',
-    '已强制重置加载状态，请刷新页面查看效果。',
-    []
-  )
+const showToast = (text, type = 'ok') => {
+  toast.value = { text, type }
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toast.value = null
+  }, 3200)
 }
 
-// 组件挂载时检查认证状态
 onMounted(() => {
-  loading.value = false
-
-  const savedAuth = localStorage.getItem('admin_authenticated')
-  const savedToken = localStorage.getItem('admin_token')
-
-  if (savedAuth === 'true' && savedToken) {
-    isAuthenticated.value = true
-
-    // Load local data for initial display
-    import('../mock/mock_data.js').then(({ mockData }) => {
-      categories.value = mockData.categories || []
-      navTitle.value = mockData.title || '猫猫导航'
-    }).catch(() => {
-      categories.value = []
-      navTitle.value = '猫猫导航'
-    })
-  } else {
-    // Clean up stale auth state
-    localStorage.removeItem('admin_authenticated')
-    clearAuthToken()
+  // 主题已在 useThemeStore 定义时同步到 <html>，这里只需让 localStorage 里的登录态生效
+  if (localStorage.getItem('admin_authenticated') === 'true') {
+    ready.value = true
+    activeId.value = ws.categories.value[0]?.id || ''
   }
 })
 </script>
 
 <style scoped>
-.admin-container {
+.ad {
   min-height: 100vh;
-  background: #2c3e50;
+  background: var(--bg);
+  color: var(--ink-1);
 }
 
-/* 登录界面样式 */
-.login-container {
+/* ── 登录 ── */
+.login {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 20px;
+  padding: 24px;
 }
-
-.login-box {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+.login-card {
   width: 100%;
-  max-width: 400px;
-}
-
-.login-box h1 {
+  max-width: 348px;
+  padding: 30px 28px 24px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--surface);
+  box-shadow: 0 20px 48px -24px rgba(15, 23, 42, 0.28);
   text-align: center;
-  margin-bottom: 30px;
-  color: #2c3e50;
-  font-size: 24px;
 }
-
-.form-group {
-  margin-bottom: 20px;
+.login-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 15px;
+  background: linear-gradient(140deg, #6f9bf5, #3b6fd8);
+  color: #fff;
 }
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #555;
-  font-weight: 500;
+.login-card h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
 }
-
-.form-input {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #e1e1e1;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border-color 0.3s ease;
+.login-sub {
+  margin: 0 0 22px;
+  font-size: 12.5px;
+  color: var(--ink-3);
 }
-
-.form-input:focus {
+.login-fld {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--ink-3);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.login-fld:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: var(--surface);
+}
+.login-fld input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink-1);
+  font-family: inherit;
+  font-size: 13.5px;
   outline: none;
-  border-color: #3498db;
 }
-
 .login-btn {
   width: 100%;
-  padding: 12px;
-  background: #3498db;
-  color: white;
+  height: 42px;
+  margin-top: 14px;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.15s ease;
 }
-
 .login-btn:hover:not(:disabled) {
-  background: #2980b9;
+  background: var(--accent-hover);
 }
-
 .login-btn:disabled {
-  background: #bdc3c7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
-
-.error-message {
-  margin-top: 15px;
-  padding: 10px;
-  background: #ffebee;
-  color: #c62828;
-  border-radius: 4px;
-  text-align: center;
-  font-size: 14px;
+.login-err {
+  margin: 11px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fdf2f2;
+  color: #b91c1c;
+  font-size: 12.5px;
+}
+.login-back {
+  margin-top: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.login-back:hover {
+  color: var(--accent);
 }
 
-/* 管理界面样式 */
-.admin-dashboard {
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.admin-header {
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* ── 顶栏 ── */
+.bar {
   position: sticky;
   top: 0;
   z-index: 100;
+  padding: 0 24px;
+  background: var(--surface-translucent);
+  backdrop-filter: saturate(1.6) blur(14px);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
+  border-bottom: 1px solid var(--line);
 }
-
-.header-content {
+.bar-inner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 15px 30px;
-  max-width: 1200px;
+  gap: 20px;
+  max-width: 1360px;
+  height: 58px;
   margin: 0 auto;
 }
-
-.header-content h1 {
-  color: #2c3e50;
-  margin: 0;
-  font-size: 20px;
-}
-
-.header-actions {
+.brand {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 9px;
+  flex-shrink: 0;
 }
-
-.user-info {
-  color: #7f8c8d;
-  font-size: 14px;
-}
-
-.emergency-btn {
-  padding: 8px 16px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-  margin-right: 15px;
-}
-
-.emergency-btn:hover {
-  background: #c0392b;
-}
-
-.debug-btn {
-  padding: 8px 16px;
-  background: #f39c12;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-  margin-right: 15px;
-}
-
-.debug-btn:hover {
-  background: #e67e22;
-}
-
-.logout-btn {
-  padding: 8px 16px;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-}
-
-.logout-btn:hover {
-  background: #c0392b;
-}
-
-.admin-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px;
-}
-
-/* loading overlay 样式 */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+.brand-ico {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(3px);
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(140deg, #6f9bf5, #3b6fd8);
+  color: #fff;
+}
+.brand-txt {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.1px;
+}
+.brand-dot {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 10.5px;
+  font-weight: 600;
 }
 
-.loading-content {
+.tabs {
   display: flex;
-  flex-direction: column;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--surface-3);
+}
+.tab {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  gap: 6px;
+  height: 30px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.tab:hover {
+  color: var(--ink-1);
+}
+.tab.on {
+  background: var(--surface);
+  color: var(--ink-1);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.09);
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+.bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.bar-link,
+.bar-btn {
+  padding: 6px 9px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-3);
+  font-family: inherit;
+  font-size: 12.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.14s ease, background-color 0.14s ease;
+}
+.bar-link:hover,
+.bar-btn:hover {
+  color: var(--ink-1);
+  background: var(--surface-2);
+}
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 15px;
+  border: none;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+.save-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.save-btn:disabled {
+  background: var(--surface-3);
+  color: var(--ink-3);
+  cursor: default;
+}
+.spin {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  animation: sp 0.7s linear infinite;
+}
+@keyframes sp {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* ── 主体 ── */
+.body {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 20px 24px 46px;
 }
 
-.admin-tabs {
+.skeleton {
   display: flex;
-  background: white;
-  border-radius: 8px;
-  padding: 5px;
-  margin-bottom: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  gap: 18px;
 }
-
-.tab-btn {
+.sk-side {
+  width: 268px;
+  height: 420px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.sk-main {
   flex: 1;
-  padding: 12px 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: #7f8c8d;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  padding: 22px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
 }
-
-.tab-btn.active {
-  background: #3498db;
-  color: white;
-}
-
-.tab-btn:hover:not(.active) {
-  background: #f8f9fa;
-  color: #2c3e50;
-}
-
-.tab-content {
-  background: white;
-  border-radius: 8px;
-  padding: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* 跳过加载按钮样式 */
-.skip-loading-btn {
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: #f39c12;
-  color: white;
-  border: none;
+.sk-line {
+  height: 14px;
+  margin-bottom: 12px;
   border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
+  background: var(--surface-2);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.sk-line.short {
+  width: 42%;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
 }
 
-.skip-loading-btn:hover {
-  background: #e67e22;
+/* ── 提示条 ── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  z-index: 3000;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.45);
+}
+.toast.warn {
+  background: #b91c1c;
+}
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .header-content {
-    padding: 15px 20px;
+@media (max-width: 860px) {
+  .bar {
+    padding: 0 14px;
   }
-
-  .admin-main {
-    padding: 20px 15px;
+  .bar-inner {
+    gap: 10px;
+    height: 54px;
   }
-
-  .tab-content {
-    padding: 20px 15px;
+  .brand-txt,
+  .bar-link {
+    display: none;
   }
-
-  .admin-tabs {
+  .tab {
+    padding: 0 10px;
+    font-size: 12.5px;
+  }
+  .body {
+    padding: 14px 14px 40px;
+  }
+  .skeleton {
     flex-direction: column;
   }
-
-  .tab-btn {
-    margin-bottom: 5px;
+  .sk-side {
+    width: 100%;
   }
 }
 </style>

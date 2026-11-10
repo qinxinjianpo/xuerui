@@ -9,6 +9,7 @@ export function useNavigation() {
   const title = ref('')
   const footer = ref({ text: '愿逐月华流照君', url: '' })
   const icpNumber = ref('')
+  const logo = ref('')
   const defaultSearchEngine = ref('bing')
   const loading = ref(false)
   const error = ref(null)
@@ -24,6 +25,8 @@ export function useNavigation() {
     }
 
     icpNumber.value = data.icp || ''
+    // 后台没存过就退回仓库里自带的 public/logo.png（没有也不会报错，组件会回落 SVG）
+    logo.value = data.logo || '/logo.png'
 
     defaultSearchEngine.value = ENGINES.includes(data.search) ? data.search : 'bing'
 
@@ -59,6 +62,7 @@ export function useNavigation() {
     title,
     footer,
     icpNumber,
+    logo,
     defaultSearchEngine,
     loading,
     error,
