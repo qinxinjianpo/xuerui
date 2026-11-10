@@ -1,28 +1,24 @@
 <template>
-  <!-- 锁定界面 -->
+  <!-- 全站访问保护（VITE_OPEN_LOCK 开启时） -->
   <div v-if="isLocked && !isUnlocked" class="lock-container">
     <div class="lock-box">
-      <h1>🔐 访问验证</h1>
+      <div class="lock-icon" v-html="iconSvg('lock')"></div>
+      <h1>访问验证</h1>
       <p class="lock-description">此导航站已启用访问保护</p>
       <form @submit.prevent="handleUnlock">
-        <div class="form-group">
-          <label for="unlock-password">请输入访问密钥:</label>
-          <input
-            id="unlock-password"
-            type="password"
-            v-model="unlockPassword"
-            placeholder="请输入访问密钥"
-            required
-            class="form-input"
-          />
-        </div>
+        <input
+          id="unlock-password"
+          type="password"
+          v-model="unlockPassword"
+          placeholder="请输入访问密钥"
+          required
+          class="lock-input"
+        />
         <button type="submit" class="unlock-btn" :disabled="unlocking">
-          {{ unlocking ? '验证中...' : '进入导航' }}
+          {{ unlocking ? '验证中…' : '进入导航' }}
         </button>
       </form>
-      <div v-if="unlockError" class="error-message">
-        {{ unlockError }}
-      </div>
+      <div v-if="unlockError" class="error-message">{{ unlockError }}</div>
     </div>
   </div>
 
@@ -30,7 +26,6 @@
   <div v-else class="nav-home">
     <!-- 左侧边栏 -->
     <aside class="sidebar">
-      <!-- Logo区域 -->
       <div class="logo-section">
         <svg class="logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
           <defs>
@@ -48,132 +43,160 @@
           <rect width="48" height="48" rx="14" fill="#fff" opacity=".95" mask="url(#navLogoMask)" />
           <circle cx="35.4" cy="13.6" r="1.7" fill="#fff" opacity=".85" />
         </svg>
-        <h1 class="site-title">{{ title || 'Sherry 导航' }}</h1>
+        <h1 class="site-title">{{ title || '导航' }}</h1>
       </div>
 
-      <!-- 分类导航 -->
       <nav class="category-nav">
-                <ul class="category-list">
-            <li
-              v-for="category in categories"
-              :key="category.id"
-              class="category-item"
-              :class="{ active: activeCategory === category.id }"
-              role="button"
-              tabindex="0"
-              @click="scrollToCategory(category.id)"
-              @keydown.enter.prevent="scrollToCategory(category.id)"
-            >
-            <span class="category-icon">{{ category.icon }}</span>
+        <ul class="category-list">
+          <li
+            v-for="category in categories"
+            :key="category.id"
+            class="category-item"
+            :class="{ active: activeCategory === category.id }"
+            role="button"
+            tabindex="0"
+            @click="scrollToCategory(category.id)"
+            @keydown.enter.prevent="scrollToCategory(category.id)"
+          >
+            <span class="cat-ico" v-html="iconSvg(category.icon)"></span>
             <span class="category-name">{{ category.name }}</span>
-            <span class="category-count">{{ (category.sites || []).length }}</span>
+            <span v-if="category.private" class="cat-lock" :title="isVaultLocked(category) ? '已上锁' : '已解锁'" v-html="iconSvg('lock')"></span>
           </li>
         </ul>
       </nav>
 
-      <!-- 左侧边栏底部信息 -->
+      <!-- 底部链接：文案与地址都可在后台改 -->
       <div class="sidebar-footer">
         <a
-          href="https://blog.sherry.dpdns.org/"
+          v-if="footer.url"
+          :href="footer.url"
           target="_blank"
           rel="noopener noreferrer"
-          class="github-link"
-          title="前往博客"
+          class="side-foot-link"
+          :title="footer.text"
         >
-          <span>🌙 愿逐月华流照君</span>
+          <span class="foot-ico" v-html="iconSvg('moon')"></span>
+          <span class="foot-txt">{{ footer.text }}</span>
         </a>
+        <span v-else class="side-foot-link is-plain">
+          <span class="foot-ico" v-html="iconSvg('moon')"></span>
+          <span class="foot-txt">{{ footer.text }}</span>
+        </span>
       </div>
     </aside>
 
     <!-- 右侧主内容区 -->
     <main class="main-content">
-                  <!-- 顶部搜索栏 -->
       <header class="search-header">
-        <div class="search-container">
-          <div class="search-engine-selector">
-            <img :src="searchEngines[selectedEngine].icon" :alt="selectedEngine" class="engine-logo" />
-            <span class="engine-caret">▾</span>
-            <select v-model="selectedEngine" class="engine-select" aria-label="选择搜索引擎">
-              <option value="google">Google</option>
-              <option value="baidu">Baidu</option>
-              <option value="bing">Bing</option>
-              <option value="duckduckgo">DuckDuckGo</option>
-            </select>
+        <div class="search-box">
+          <span class="s-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="10.8" cy="10.8" r="6.6" />
+              <path d="M15.6 15.6L20.4 20.4" />
+            </svg>
+          </span>
+
+          <!-- 只保留 Bing / 百度，点一下切换 -->
+          <div class="engine-switch" role="group" aria-label="选择搜索引擎">
+            <button
+              v-for="e in engineList"
+              :key="e.key"
+              type="button"
+              class="eng-chip"
+              :class="{ active: selectedEngine === e.key }"
+              @click="selectedEngine = e.key"
+            >{{ e.label }}</button>
           </div>
+
           <input
             ref="searchInputEl"
             type="text"
             v-model="searchQuery"
-            :placeholder="searchEngines[selectedEngine].placeholder"
+            :placeholder="currentEngine.placeholder"
             class="search-input"
             @keyup.enter="handleSearch"
-            @keyup.esc="searchQuery = ''"
+            @keyup.esc="clearSearch"
           />
-          <span class="search-kbd" aria-hidden="true"><kbd>/</kbd></span>
+
+          <button v-if="searchQuery" type="button" class="s-clear" aria-label="清空" @click="clearSearch">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M7 7l10 10M17 7L7 17" />
+            </svg>
+          </button>
+          <span v-else class="search-kbd" aria-hidden="true"><kbd>/</kbd></span>
         </div>
 
-        <!-- 主题切换按钮 -->
-        <button class="theme-toggle-btn" @click="themeStore.toggleTheme" :title="themeStore.isDarkMode ? '切换到日间模式' : '切换到夜间模式'">
-          <svg v-if="!themeStore.isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z"/>
-          </svg>
-          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z"/>
-          </svg>
-        </button>
+        <div class="head-right">
+          <!-- 时间 / 日期 / 天气 -->
+          <div class="clock">
+            <div class="c-col">
+              <span class="c-time">{{ clockTime }}</span>
+              <span class="c-date">{{ clockDate }}</span>
+            </div>
+            <div v-if="weather" class="c-wx" :title="weatherTitle">
+              <span class="c-wx-top">
+                <span class="wx-ico" v-html="wxSvg"></span>
+                <span class="c-temp">{{ weather.temp }}°</span>
+              </span>
+              <span class="c-city">{{ loc.name }} · {{ wxText }}</span>
+            </div>
+          </div>
 
-        <!-- 移动端菜单按钮 -->
-        <button class="mobile-menu-btn" @click="toggleMobileMenu" aria-label="打开分类导航">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
+          <button class="icon-btn" :title="themeStore.isDarkMode ? '切换到日间模式' : '切换到夜间模式'" @click="themeStore.toggleTheme">
+            <svg v-if="!themeStore.isDarkMode" width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 18C8.68629 18 6 15.3137 6 12C6 8.68629 8.68629 6 12 6C15.3137 6 18 8.68629 18 12C18 15.3137 15.3137 18 12 18ZM12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16ZM11 1H13V4H11V1ZM11 20H13V23H11V20ZM3.51472 4.92893L4.92893 3.51472L7.05025 5.63604L5.63604 7.05025L3.51472 4.92893ZM16.9497 18.364L18.364 16.9497L20.4853 19.0711L19.0711 20.4853L16.9497 18.364ZM19.0711 3.51472L20.4853 4.92893L18.364 7.05025L16.9497 5.63604L19.0711 3.51472ZM5.63604 16.9497L7.05025 18.364L4.92893 20.4853L3.51472 19.0711L5.63604 16.9497ZM23 11V13H20V11H23ZM4 11V13H1V11H4Z"/>
+            </svg>
+            <svg v-else width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 7C10 10.866 13.134 14 17 14C18.9584 14 20.729 13.1957 21.9995 11.8995C22 11.933 22 11.9665 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C12.0335 2 12.067 2 12.1005 2.00049C10.8043 3.27098 10 5.04157 10 7ZM4 12C4 16.4183 7.58172 20 12 20C15.0583 20 17.7158 18.2839 19.062 15.7621C18.3945 15.9187 17.7035 16 17 16C12.0294 16 8 11.9706 8 7C8 6.29648 8.08133 5.60547 8.2379 4.938C5.71611 6.28423 4 8.9417 4 12Z"/>
+            </svg>
+          </button>
 
-        <!-- 移动端分类菜单 -->
+          <button class="icon-btn mobile-only" @click="toggleMobileMenu" aria-label="打开分类导航">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 7h18M3 12h18M3 17h18" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- 移动端分类抽屉 -->
         <div class="mobile-menu" :class="{ active: showMobileMenu }">
           <div class="mobile-menu-header">
             <div class="header-left">
               <h3>分类导航</h3>
-              <img :src="githubLogo" alt="GitHub" class="header-github-icon" @click="openGitHub" />
             </div>
             <button class="close-btn" @click="closeMobileMenu" aria-label="关闭菜单">×</button>
           </div>
-                    <ul class="mobile-category-list">
-              <li
-                v-for="category in categories"
-                :key="category.id"
-                class="mobile-category-item"
-                :class="{ active: activeCategory === category.id }"
-                role="button"
-                tabindex="0"
-                @click="scrollToCategoryMobile(category.id)"
-                @keydown.enter.prevent="scrollToCategoryMobile(category.id)"
-              >
-              <span class="category-icon">{{ category.icon }}</span>
+          <ul class="mobile-category-list">
+            <li
+              v-for="category in categories"
+              :key="category.id"
+              class="mobile-category-item"
+              :class="{ active: activeCategory === category.id }"
+              role="button"
+              tabindex="0"
+              @click="scrollToCategoryMobile(category.id)"
+              @keydown.enter.prevent="scrollToCategoryMobile(category.id)"
+            >
+              <span class="cat-ico" v-html="iconSvg(category.icon)"></span>
               <span class="category-name">{{ category.name }}</span>
+              <span v-if="category.private" class="cat-lock" v-html="iconSvg('lock')"></span>
             </li>
           </ul>
         </div>
-
-        <!-- 移动端菜单遮罩 -->
         <div class="mobile-menu-overlay" :class="{ active: showMobileMenu }" @click="closeMobileMenu"></div>
       </header>
 
-      <!-- 导航内容区 -->
       <div class="content-area">
-        <!-- 加载状态 -->
         <div v-if="loading" class="loading">
           <div class="loading-spinner"></div>
-          <p>加载中...</p>
+          <p>加载中…</p>
         </div>
 
-        <!-- 错误状态 -->
         <div v-else-if="error" class="error">
           <p>{{ error }}</p>
           <button @click="fetchCategories" class="retry-btn">重试</button>
         </div>
 
-                <!-- 分类内容 -->
         <div v-else class="categories-container">
           <template v-if="filteredCategories.length">
             <section
@@ -183,12 +206,30 @@
               :id="`category-${category.id}`"
             >
               <h2 class="category-title">
-                <span class="category-icon">{{ category.icon }}</span>
+                <span class="cat-ico lg" v-html="iconSvg(category.icon)"></span>
                 <span class="category-name">{{ category.name }}</span>
-                <span class="cat-count">{{ category.sites.length }} 站</span>
+                <button
+                  v-if="category.private && unlockedMap[category.id]"
+                  type="button"
+                  class="cat-relock"
+                  title="立刻锁回去"
+                  @click="relock(category)"
+                >上锁</button>
               </h2>
 
-              <div class="sites-grid">
+              <!-- 上锁：整块只留一张入口卡，站点一个都不渲染 -->
+              <div v-if="isVaultLocked(category)" class="vault">
+                <button type="button" class="vault-btn" @click="openUnlock(category)">
+                  <span class="vault-ico" v-html="iconSvg('lock')"></span>
+                  <span class="vault-txt">
+                    <strong>私密分类 · 已上锁</strong>
+                    <em>{{ category.count ? `输入口令后显示 ${category.count} 个站点` : '输入口令后显示这里的站点' }}</em>
+                  </span>
+                  <span class="vault-go">输入口令</span>
+                </button>
+              </div>
+
+              <div v-else-if="category.sites.length" class="sites-grid">
                 <a
                   v-for="(site, siteIndex) in category.sites"
                   :key="site.id"
@@ -214,329 +255,337 @@
                   </div>
                 </a>
               </div>
+
+              <p v-else class="cat-empty">这个分类还没有站点</p>
             </section>
           </template>
 
-          <!-- 站内过滤空态 -->
           <div v-else class="filter-empty">
-            <div class="filter-empty-icon">🔍</div>
+            <div class="filter-empty-icon" v-html="iconSvg('compass')"></div>
             <p>没有找到与「{{ searchQuery }}」相关的站点</p>
-            <button class="filter-clear-btn" @click="searchQuery = ''">清除过滤</button>
+            <button class="filter-clear-btn" @click="clearSearch">清除过滤</button>
           </div>
         </div>
       </div>
 
-      <!-- 回到顶部 -->
-      <button
-        class="back-top-btn"
-        :class="{ show: showBackTop }"
-        @click="scrollToTop"
-        aria-label="回到顶部"
-        title="回到顶部"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 5L12 19M12 5L5.5 11.5M12 5L18.5 11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <button class="back-top-btn" :class="{ show: showBackTop }" @click="scrollToTop" aria-label="回到顶部" title="回到顶部">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M12 5l-6.5 6.5M12 5l6.5 6.5" />
         </svg>
       </button>
 
-      <!-- 备案号默认显示在主内容底部，未配置时不占用空间 -->
       <footer v-if="icpNumber" class="icp-footer">
-        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
-          {{ icpNumber }}
-        </a>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ icpNumber }}</a>
       </footer>
     </main>
+
+    <!-- 私密分类解锁弹窗 -->
+    <div v-if="unlockTarget" class="vault-mask" @click.self="closeUnlock">
+      <div class="vault-panel">
+        <div class="vp-head">
+          <span class="vp-ico" v-html="iconSvg('key')"></span>
+          <div class="vp-title">
+            <h3>{{ unlockTarget.name }}</h3>
+            <p>输入这个分类的口令</p>
+          </div>
+          <button class="vp-close" @click="closeUnlock" aria-label="关闭">×</button>
+        </div>
+
+        <form @submit.prevent="doUnlock">
+          <input
+            ref="unlockInput"
+            v-model="unlockPwd"
+            type="password"
+            class="vp-input"
+            placeholder="口令"
+            autocomplete="off"
+            autofocus
+          />
+          <p v-if="unlockErr" class="vp-err">{{ unlockErr }}</p>
+          <button type="submit" class="vp-submit" :disabled="unlocking || !unlockPwd">
+            {{ unlocking ? '验证中…' : '解锁' }}
+          </button>
+        </form>
+
+        <p class="vp-tip">口令只在本机校验，不上传；解锁仅在本次浏览有效</p>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useNavigation } from '@/apis/useNavigation.js'
 import { useThemeStore } from '@/stores/counter.js'
-// 导入搜索引擎logo图片
-import googleLogo from '@/assets/goolge.png'
-import baiduLogo from '@/assets/baidu.png'
-import bingLogo from '@/assets/bing.png'
-import duckLogo from '@/assets/duck.png'
-// 导入GitHub logo
-import githubLogo from '@/assets/github.png'
+import { iconSvg } from '@/utils/icons.js'
+import { fetchWeather, weatherIcon, weatherText, WEATHER_LOCATION } from '@/utils/weather.js'
+import { isSealed, openSealed } from '@/utils/secret.js'
 
-// 使用导航API
-const { categories, title, icpNumber, defaultSearchEngine, loading, error, fetchCategories } = useNavigation()
-
-// 使用主题store
+const { categories, title, footer, icpNumber, defaultSearchEngine, loading, error, fetchCategories } = useNavigation()
 const themeStore = useThemeStore()
 
-// 响应式数据
-const searchQuery = ref('') // 搜索查询
-const selectedEngine = ref('bing') // 选中的搜索引擎，初始值会在组件挂载后更新
-const showMobileMenu = ref(false) // 移动端菜单显示状态
-const searchInputEl = ref(null) // 搜索框引用，供快捷键聚焦
-const showBackTop = ref(false) // 回到顶部按钮显示状态
+const loc = WEATHER_LOCATION
 
-// 当前高亮分类（滚动联动）
-const activeCategory = ref('')
+/* ── 搜索 ── */
+const engineList = [
+  { key: 'bing', label: 'Bing', url: 'https://www.bing.com/search?q=', placeholder: 'Bing 搜索' },
+  { key: 'baidu', label: '百度', url: 'https://www.baidu.com/s?wd=', placeholder: '百度一下' }
+]
+const searchQuery = ref('')
+const selectedEngine = ref('bing')
+const searchInputEl = ref(null)
+const currentEngine = computed(
+  () => engineList.find((e) => e.key === selectedEngine.value) || engineList[0]
+)
 
-// 站内快速过滤：有输入时先在本地按名称/描述/网址匹配；
-// 过滤后各分类只显示命中的站点，全部无命中时展示空态
 const filteredCategories = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return categories.value
   return categories.value
-    .map((cat) => ({
-      ...cat,
-      sites: (cat.sites || []).filter(
-        (s) =>
-          (s.name || '').toLowerCase().includes(q) ||
-          (s.description || '').toLowerCase().includes(q) ||
-          (s.url || '').toLowerCase().includes(q)
-      ),
-    }))
-    .filter((cat) => cat.sites.length > 0)
+    .map((cat) => {
+      // 上锁的分类保留入口，否则一搜就消失
+      if (isVaultLocked(cat)) return { ...cat }
+      return {
+        ...cat,
+        sites: (cat.sites || []).filter(
+          (s) =>
+            (s.name || '').toLowerCase().includes(q) ||
+            (s.description || '').toLowerCase().includes(q) ||
+            (s.url || '').toLowerCase().includes(q)
+        )
+      }
+    })
+    .filter((cat) => cat.sites.length > 0 || isVaultLocked(cat))
 })
 
-// 锁定功能相关
-const isLocked = ref(false) // 是否启用锁定功能
-const isUnlocked = ref(false) // 是否已解锁
-const unlockPassword = ref('') // 解锁密码输入
-const unlocking = ref(false) // 解锁中状态
-const unlockError = ref('') // 解锁错误信息
-
-// 搜索引擎配置
-const searchEngines = {
-  google: {
-    url: 'https://www.google.com/search?q=',
-    icon: googleLogo,
-    placeholder: 'Google 搜索'
-  },
-  baidu: {
-    url: 'https://www.baidu.com/s?wd=',
-    icon: baiduLogo,
-    placeholder: '百度一下'
-  },
-  bing: {
-    url: 'https://www.bing.com/search?q=',
-    icon: bingLogo,
-    placeholder: 'Bing 搜索'
-  },
-  duckduckgo: {
-    url: 'https://duckduckgo.com/?q=',
-    icon: duckLogo,
-    placeholder: 'DuckDuckGo 搜索'
-  }
+const clearSearch = () => {
+  searchQuery.value = ''
 }
 
-// 自定义固定时间滚动函数
-const smoothScrollTo = (container, targetTop, duration = 600) => {
-  const startTop = container.scrollTop
-  const distance = targetTop - startTop
-  let startTime = null
-
-  const animateScroll = (currentTime) => {
-    if (startTime === null) startTime = currentTime
-    const timeElapsed = currentTime - startTime
-    const progress = Math.min(timeElapsed / duration, 1)
-
-    // 使用缓动函数 (easeInOutCubic)
-    const ease = progress < 0.5
-      ? 4 * progress * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 3) / 2
-
-    container.scrollTop = startTop + distance * ease
-
-    if (progress < 1) {
-      requestAnimationFrame(animateScroll)
-    }
+const handleSearch = () => {
+  const q = searchQuery.value.trim()
+  if (!q) return
+  const first = filteredCategories.value.find((c) => !isVaultLocked(c))?.sites?.[0]
+  if (first) {
+    window.open(first.url, '_blank')
+    return
   }
-
-  requestAnimationFrame(animateScroll)
+  window.open(currentEngine.value.url + encodeURIComponent(q), '_blank')
 }
 
-// 滚动到指定分类
-const scrollToCategory = (categoryId) => {
-  const element = document.getElementById(`category-${categoryId}`)
-  const container = document.querySelector('.content-area')
+/* ── 时钟 ── */
+const now = ref(new Date())
+let clockTimer = null
+const pad2 = (n) => String(n).padStart(2, '0')
+const clockTime = computed(() => `${pad2(now.value.getHours())}:${pad2(now.value.getMinutes())}`)
+const clockDate = computed(() => {
+  const d = now.value
+  const week = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()]
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${week}`
+})
 
-  if (element && container) {
-    // 检查是否为移动端
-    const isMobile = window.innerWidth <= 768
+/* ── 天气（失败就只显示时间，不弹错误） ── */
+const weather = ref(null)
+let weatherTimer = null
+const wxSvg = computed(() => (weather.value ? weatherIcon(weather.value.code, weather.value.isDay) : ''))
+const wxText = computed(() => (weather.value ? weatherText(weather.value.code) : ''))
+const weatherTitle = computed(() => {
+  const w = weather.value
+  if (!w) return ''
+  return `${wxText.value}　${w.low}° ~ ${w.high}°　体感 ${w.feels}°　湿度 ${w.humidity}%　风速 ${w.wind} km/h`
+})
 
-    let targetTop = 0
-
-    if (isMobile) {
-      // 移动端：在 content-area 容器内滚动，搜索栏高度运行时实测，避免硬编码失准
-      const elementOffsetTop = element.offsetTop
-      const searchHeaderHeight = document.querySelector('.search-header')?.offsetHeight || 80
-      targetTop = elementOffsetTop - searchHeaderHeight
-    } else {
-      // 桌面端：在容器内滚动
-      const searchHeader = document.querySelector('.search-header')
-      const elementOffsetTop = element.offsetTop
-      const searchHeaderHeight = searchHeader ? searchHeader.offsetHeight + 20 : 100
-      targetTop = elementOffsetTop - searchHeaderHeight
-    }
-
-    // 使用固定时间滚动（600毫秒）
-    smoothScrollTo(container, Math.max(0, targetTop), 600)
-  }
+const loadWeather = async () => {
+  const data = await fetchWeather()
+  if (data) weather.value = data
 }
 
-// 检查是否启用锁定功能
-const checkLockStatus = () => {
-  const openLock = import.meta.env.VITE_OPEN_LOCK
-  if (openLock && openLock.trim() !== '') {
-    isLocked.value = true
-    // 检查是否已经解锁过
-    const savedUnlock = localStorage.getItem('nav_unlocked')
-    if (savedUnlock === 'true') {
-      isUnlocked.value = true
-    }
-  } else {
-    isLocked.value = false
-    isUnlocked.value = true // 如果没有启用锁定，默认为解锁状态
-  }
+/* ── 私密分类 ── */
+const unlockedMap = reactive({})
+const unlockTarget = ref(null)
+const unlockPwd = ref('')
+const unlockErr = ref('')
+const unlocking = ref(false)
+const unlockInput = ref(null)
+
+/** 有 private 标记、内容是密文、且本次还没解开 */
+function isVaultLocked(cat) {
+  return !!(cat && cat.private && isSealed(cat.lock) && !unlockedMap[cat.id])
 }
 
-// 处理解锁（通过服务端验证）
-const handleUnlock = async () => {
+const openUnlock = (cat) => {
+  unlockTarget.value = cat
+  unlockPwd.value = ''
+  unlockErr.value = ''
+  nextTick(() => unlockInput.value?.focus())
+}
+
+const closeUnlock = () => {
+  unlockTarget.value = null
+  unlockPwd.value = ''
+  unlockErr.value = ''
+}
+
+const doUnlock = async () => {
+  const cat = unlockTarget.value
+  if (!cat || !unlockPwd.value) return
   unlocking.value = true
-  unlockError.value = ''
-
+  unlockErr.value = ''
   try {
-    const response = await fetch('/api/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: unlockPassword.value }),
-    })
-
-    const result = await response.json()
-
-    if (!result.success) {
-      throw new Error(result.error || '访问密钥错误，请重新输入')
-    }
-
-    isUnlocked.value = true
-    localStorage.setItem('nav_unlocked', 'true')
-    unlockPassword.value = ''
-  } catch (error) {
-    unlockError.value = error.message
+    const data = await openSealed(cat.lock, unlockPwd.value)
+    cat.sites = Array.isArray(data?.sites) ? data.sites : []
+    if (data?.name) cat.name = data.name
+    unlockedMap[cat.id] = true
+    closeUnlock()
+  } catch {
+    unlockErr.value = '口令不对，或者这个分类的密文已损坏'
   } finally {
     unlocking.value = false
   }
 }
 
-// 处理搜索：本地有匹配站点时回车直达第一个命中站点，否则回退外部搜索引擎
-const handleSearch = () => {
-  const q = searchQuery.value.trim()
-  if (!q) return
-
-  const first = filteredCategories.value[0]?.sites?.[0]
-  if (first) {
-    window.open(first.url, '_blank')
-    return
-  }
-
-  const engine = searchEngines[selectedEngine.value]
-  const url = engine.url + encodeURIComponent(q)
-  window.open(url, '_blank')
+/** 立刻锁回去：只清内存，密文没动 */
+const relock = (cat) => {
+  cat.sites = []
+  delete unlockedMap[cat.id]
 }
 
-// 站点首字母占位色：同一站点每次打开颜色稳定
-const fallbackLetter = (name) => (name || '?').trim().charAt(0).toUpperCase()
+/* ── 全站访问保护（环境变量控制） ── */
+const isLocked = ref(false)
+const isUnlocked = ref(false)
+const unlockPassword = ref('')
+const unlockError = ref('')
 
+const checkLockStatus = () => {
+  const openLock = import.meta.env.VITE_OPEN_LOCK
+  if (openLock && openLock.trim() !== '') {
+    isLocked.value = true
+    if (localStorage.getItem('nav_unlocked') === 'true') isUnlocked.value = true
+  } else {
+    isLocked.value = false
+    isUnlocked.value = true
+  }
+}
+
+const handleUnlock = async () => {
+  unlocking.value = true
+  unlockError.value = ''
+  try {
+    const response = await fetch('/api/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: unlockPassword.value })
+    })
+    const result = await response.json()
+    if (!result.success) throw new Error(result.error || '访问密钥错误，请重新输入')
+    isUnlocked.value = true
+    localStorage.setItem('nav_unlocked', 'true')
+    unlockPassword.value = ''
+  } catch (e) {
+    unlockError.value = e.message
+  } finally {
+    unlocking.value = false
+  }
+}
+
+/* ── 站点图标兜底 ── */
+const fallbackLetter = (name) => (name || '?').trim().charAt(0).toUpperCase()
 const fallbackColor = (name) => {
   const key = name || '?'
   let hash = 0
   for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) % 360
   return `linear-gradient(135deg, hsl(${hash}, 46%, 58%), hsl(${(hash + 24) % 360}, 50%, 44%))`
 }
-
-// 图标加载成功：收起底下的首字母占位块，只留干净的白底图标
 const handleImageLoad = (event) => {
   event.target.closest('.site-icon')?.classList.add('icon-loaded')
 }
-
-// 图标加载失败：直接移除 img，露出底下的首字母占位块（不再临时拼 DOM）
 const handleImageError = (event) => {
   event.target.remove()
 }
 
-// 移动端菜单控制
+/* ── 滚动 ── */
+const showMobileMenu = ref(false)
+const showBackTop = ref(false)
+const activeCategory = ref('')
+
+const smoothScrollTo = (container, targetTop, duration = 600) => {
+  const startTop = container.scrollTop
+  const distance = targetTop - startTop
+  let startTime = null
+  const animate = (t) => {
+    if (startTime === null) startTime = t
+    const p = Math.min((t - startTime) / duration, 1)
+    const ease = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+    container.scrollTop = startTop + distance * ease
+    if (p < 1) requestAnimationFrame(animate)
+  }
+  requestAnimationFrame(animate)
+}
+
+const scrollToCategory = (categoryId) => {
+  const element = document.getElementById(`category-${categoryId}`)
+  const container = document.querySelector('.content-area')
+  if (!element || !container) return
+  const isMobile = window.innerWidth <= 768
+  const header = document.querySelector('.search-header')
+  const headerH = header ? header.offsetHeight : 80
+  const targetTop = element.offsetTop - (isMobile ? headerH : headerH + 20)
+  smoothScrollTo(container, Math.max(0, targetTop), 600)
+}
+
 const toggleMobileMenu = () => {
   showMobileMenu.value = !showMobileMenu.value
-  // 控制body滚动
-  if (showMobileMenu.value) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
+  document.body.style.overflow = showMobileMenu.value ? 'hidden' : ''
 }
-
 const closeMobileMenu = () => {
   showMobileMenu.value = false
-  // 恢复body滚动
   document.body.style.overflow = ''
 }
-
-// 移动端分类滚动
 const scrollToCategoryMobile = (categoryId) => {
-  closeMobileMenu() // 先关闭菜单
-
-  // 稍微延迟一下再滚动，确保菜单关闭动画完成
-  setTimeout(() => {
-    scrollToCategory(categoryId)
-  }, 200)
+  closeMobileMenu()
+  setTimeout(() => scrollToCategory(categoryId), 200)
 }
 
-// 打开GitHub项目页面（指向本项目仓库）
-const openGitHub = () => {
-  window.open('https://github.com/qinxinjianpo/xuerui', '_blank')
-}
-
-// 回到顶部
 const scrollToTop = () => {
   const container = document.querySelector('.content-area')
   if (container) smoothScrollTo(container, 0, 500)
 }
 
-// 滚动联动：根据右侧内容区滚动位置高亮对应分类
 const onContentScroll = () => {
   const container = document.querySelector('.content-area')
   if (!container) return
-
-  // 滚动超过一屏后显示回到顶部按钮
   showBackTop.value = container.scrollTop > 400
-
   const containerTop = container.getBoundingClientRect().top
-  const sections = container.querySelectorAll('.category-section')
   let current = activeCategory.value
-  for (const sec of sections) {
+  for (const sec of container.querySelectorAll('.category-section')) {
     const top = sec.getBoundingClientRect().top - containerTop
-    if (top <= 120) {
-      current = sec.id.replace('category-', '')
-    }
+    if (top <= 120) current = sec.id.replace('category-', '')
   }
   if (current) activeCategory.value = current
 }
 
-// 「/」快速聚焦搜索框（输入框内不劫持）
+/* 「/」聚焦搜索框 */
 const onGlobalKeydown = (e) => {
   if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return
   const el = e.target
-  const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
-  if (typing) return
+  if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return
   e.preventDefault()
   searchInputEl.value?.focus()
 }
 
-// 组件挂载时获取数据
 onMounted(async () => {
-  checkLockStatus() // 检查锁定状态
+  checkLockStatus()
   window.addEventListener('keydown', onGlobalKeydown)
   await fetchCategories()
-  // 设置默认搜索引擎
   selectedEngine.value = defaultSearchEngine.value
-  // 初始化滚动联动高亮
+
+  clockTimer = setInterval(() => {
+    now.value = new Date()
+  }, 20000)
+
+  loadWeather()
+  weatherTimer = setInterval(loadWeather, 30 * 60 * 1000)
+
   await nextTick()
   activeCategory.value = categories.value[0]?.id || ''
   const container = document.querySelector('.content-area')
@@ -544,159 +593,104 @@ onMounted(async () => {
   onContentScroll()
 })
 
-// 组件卸载时清理样式
 onUnmounted(() => {
   window.removeEventListener('keydown', onGlobalKeydown)
-  // 确保卸载时恢复body滚动
+  if (clockTimer) clearInterval(clockTimer)
+  if (weatherTimer) clearInterval(weatherTimer)
   document.body.style.overflow = ''
-  // 移除滚动监听，避免内存泄漏
   const container = document.querySelector('.content-area')
   container?.removeEventListener('scroll', onContentScroll)
 })
 </script>
 
 <style scoped>
-/* 锁定界面样式（独立场景，保留亮暗两套显式配色） */
+/* ── 全站锁定页 ── */
 .lock-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2c3e50;
+  min-height: 100vh;
   padding: 20px;
-  z-index: 9999;
+  background: linear-gradient(160deg, #101d31, #1b2c46 55%, #0f1929);
 }
-
 .lock-box {
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 400px;
+  max-width: 350px;
+  padding: 36px 28px 30px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.55);
   text-align: center;
 }
-
+.lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.lock-icon :deep(svg) {
+  width: 24px;
+  height: 24px;
+}
 .lock-box h1 {
-  color: #2d3748;
-  margin-bottom: 8px;
-  font-size: 28px;
-  font-weight: 600;
+  margin: 0 0 6px;
+  font-size: 19px;
+  font-weight: 650;
+  color: var(--ink-1);
 }
-
 .lock-description {
-  color: #718096;
-  margin-bottom: 30px;
-  font-size: 16px;
+  margin: 0 0 22px;
+  font-size: 12.5px;
+  color: var(--ink-3);
 }
-
-.lock-box .form-group {
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-.lock-box .form-group label {
-  display: block;
-  margin-bottom: 8px;
-  color: #4a5568;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.lock-box .form-input {
+.lock-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  background: #fff;
-}
-
-.lock-box .form-input:focus {
+  height: 44px;
+  padding: 0 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--ink-1);
+  font-size: 14px;
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
-
+.lock-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
 .unlock-btn {
   width: 100%;
-  padding: 12px 24px;
-  background: var(--accent);
-  color: white;
+  height: 44px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
+  transition: background-color 0.16s ease;
 }
-
 .unlock-btn:hover:not(:disabled) {
   background: var(--accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
 }
-
 .unlock-btn:disabled {
   opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+  cursor: default;
+}
+.error-message {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: #e5484d;
 }
 
-.lock-box .error-message {
-  margin-top: 15px;
-  padding: 12px;
-  background: #fed7d7;
-  color: #c53030;
-  border-radius: 8px;
-  font-size: 14px;
-  border: 1px solid #feb2b2;
-}
-
-.dark .lock-container {
-  background: #0f172a;
-}
-
-.dark .lock-box {
-  background: #1e293b;
-  color: #e2e8f0;
-}
-
-.dark .lock-box h1 {
-  color: #e2e8f0;
-}
-
-.dark .lock-description {
-  color: #94a3b8;
-}
-
-.dark .lock-box .form-group label {
-  color: #cbd5e1;
-}
-
-.dark .lock-box .form-input {
-  background: var(--surface-2);
-  border: 2px solid var(--line);
-  color: #e2e8f0;
-}
-
-.dark .lock-box .form-input:focus {
-  border-color: var(--accent);
-}
-
-.dark .lock-box .error-message {
-  background: #7f1d1d;
-  color: #fecaca;
-  border-color: #991b1b;
-}
-
-/* ===== 导航主页 ===== */
+/* ── 布局 ── */
 .nav-home {
   display: flex;
   min-height: 100vh;
@@ -704,7 +698,7 @@ onUnmounted(() => {
   color: var(--ink-1);
 }
 
-/* ── 左侧边栏 ── */
+/* ── 侧边栏 ── */
 .sidebar {
   width: 224px;
   flex-shrink: 0;
@@ -715,7 +709,6 @@ onUnmounted(() => {
   color: var(--sidebar-text);
   border-right: 1px solid var(--sidebar-line);
 }
-
 .logo-section {
   display: flex;
   align-items: center;
@@ -723,7 +716,6 @@ onUnmounted(() => {
   padding: 18px 16px;
   border-bottom: 1px solid var(--sidebar-line);
 }
-
 .logo {
   width: 34px;
   height: 34px;
@@ -731,12 +723,11 @@ onUnmounted(() => {
   flex-shrink: 0;
   box-shadow: 0 4px 12px -4px rgba(59, 130, 246, 0.55);
 }
-
 .site-title {
+  margin: 0;
   font-size: 16.5px;
   font-weight: 650;
   letter-spacing: 0.3px;
-  margin: 0;
   color: #f4f7fb;
   white-space: nowrap;
   overflow: hidden;
@@ -749,17 +740,10 @@ onUnmounted(() => {
   overflow-y: auto;
   padding: 12px 10px 14px;
   scrollbar-width: none;
-  -ms-overflow-style: none;
 }
-
 .category-nav::-webkit-scrollbar {
   display: none;
 }
-
-.nav-title {
-  display: none;
-}
-
 .category-list {
   list-style: none;
   padding: 0;
@@ -768,7 +752,6 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 2px;
 }
-
 .category-item {
   position: relative;
   display: flex;
@@ -779,25 +762,20 @@ onUnmounted(() => {
   border-radius: 9px;
   cursor: pointer;
   color: var(--sidebar-text);
-  font-size: 13.5px;
   transition: background-color 0.16s ease, color 0.16s ease;
 }
-
 .category-item:hover {
   background: var(--sidebar-hover);
   color: #e6edf7;
 }
-
 .category-item:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
-
 .category-item.active {
   background: var(--sidebar-active);
-  color: #ffffff;
+  color: #fff;
 }
-
 .category-item.active::before {
   content: '';
   position: absolute;
@@ -808,19 +786,6 @@ onUnmounted(() => {
   border-radius: 0 3px 3px 0;
   background: var(--accent);
 }
-
-.category-item .category-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  opacity: 0.92;
-}
-
 .category-item .category-name {
   flex: 1;
   min-width: 0;
@@ -830,45 +795,63 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .category-item.active .category-name {
   font-weight: 600;
 }
 
-.category-count {
+/* 图标容器：统一 20px 网格，颜色跟随文字 */
+.cat-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  padding: 3px 6px;
-  border-radius: 999px;
-  color: inherit;
-  opacity: 0.45;
-  background: rgba(255, 255, 255, 0.06);
-  transition: opacity 0.16s ease, background-color 0.16s ease;
+  opacity: 0.9;
+}
+.cat-ico :deep(svg) {
+  width: 17px;
+  height: 17px;
+}
+.cat-ico :deep(.soft) {
+  opacity: 0.5;
+}
+.category-item.active .cat-ico {
+  opacity: 1;
+  color: #9dc0ff;
+}
+.cat-ico.lg {
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  opacity: 1;
+}
+.cat-ico.lg :deep(svg) {
+  width: 16px;
+  height: 16px;
+}
+.cat-lock {
+  display: inline-flex;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.cat-lock :deep(svg) {
+  width: 12px;
+  height: 12px;
 }
 
-.category-item:hover .category-count {
-  opacity: 0.7;
-}
-
-.category-item.active .category-count {
-  opacity: 0.85;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-/* ── 侧边栏底部 ── */
 .sidebar-footer {
   flex-shrink: 0;
   padding: 12px 10px 14px;
   border-top: 1px solid var(--sidebar-line);
 }
-
-.github-link {
+.side-foot-link {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   padding: 9px 10px;
   border-radius: 9px;
   color: var(--sidebar-text);
@@ -876,13 +859,29 @@ onUnmounted(() => {
   text-decoration: none;
   transition: background-color 0.16s ease, color 0.16s ease;
 }
-
-.github-link:hover {
+.side-foot-link:not(.is-plain):hover {
   background: var(--sidebar-hover);
-  color: #ffffff;
+  color: #fff;
+}
+.side-foot-link.is-plain {
+  cursor: default;
+}
+.foot-ico {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.foot-ico :deep(svg) {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.9;
+}
+.foot-txt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── 主内容区 ── */
+/* ── 主区 ── */
 .main-content {
   flex: 1;
   min-width: 0;
@@ -898,104 +897,128 @@ onUnmounted(() => {
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 13px 26px;
+  gap: 14px;
+  padding: 12px 24px;
   background: var(--surface-translucent);
   backdrop-filter: saturate(1.6) blur(14px);
   -webkit-backdrop-filter: saturate(1.6) blur(14px);
   border-bottom: 1px solid var(--line);
 }
 
-.search-container {
+.search-box {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 10px;
   flex: 1;
-  max-width: 620px;
+  min-width: 0;
+  max-width: 700px;
+  height: 46px;
   margin: 0 auto;
-  height: 44px;
-  border-radius: 12px;
+  padding: 0 10px 0 13px;
   border: 1px solid var(--line);
+  border-radius: 13px;
   background: var(--surface);
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
-
-.search-container:focus-within {
+.search-box:hover {
+  border-color: var(--border-strong);
+}
+.search-box:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-md);
+}
+.s-ico {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ink-3);
+  transition: color 0.18s ease;
+}
+.s-ico :deep(svg) {
+  width: 17px;
+  height: 17px;
+}
+.search-box:focus-within .s-ico {
+  color: var(--accent);
 }
 
-.search-engine-selector {
-  position: relative;
+.engine-switch {
   display: flex;
   align-items: center;
-  height: 100%;
-  padding-left: 8px;
-  border-right: 1px solid var(--line);
-  border-radius: 12px 0 0 12px;
+  gap: 2px;
   flex-shrink: 0;
-  transition: background-color 0.16s ease;
-}
-
-.search-engine-selector:hover {
+  padding: 3px;
+  border-radius: 9px;
   background: var(--surface-2);
 }
-
-.engine-logo {
-  width: 19px;
-  height: 19px;
-  margin-right: 5px;
-  object-fit: contain;
-  pointer-events: none;
-  border-radius: 4px;
-}
-
-.engine-caret {
-  font-size: 9px;
-  color: var(--ink-3);
-  margin-right: 8px;
-  pointer-events: none;
-}
-
-.engine-select {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
+.eng-chip {
+  height: 26px;
+  padding: 0 10px;
   border: none;
-  outline: none;
+  border-radius: 7px;
   background: transparent;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+.eng-chip:hover {
+  color: var(--ink-1);
+}
+.eng-chip.active {
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
 }
 
 .search-input {
   flex: 1;
   min-width: 0;
   height: 100%;
-  padding: 0 44px 0 14px;
   border: none;
   outline: none;
   background: transparent;
   color: var(--ink-1);
-  font-size: 14.5px;
   font-family: inherit;
+  font-size: 14px;
 }
-
 .search-input::placeholder {
   color: var(--ink-3);
 }
 
-.search-kbd {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
+.s-clear {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 7px;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+.s-clear svg {
+  width: 13px;
+  height: 13px;
+}
+.s-clear:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
+.search-kbd {
+  display: flex;
+  flex-shrink: 0;
+  pointer-events: none;
+}
 .search-kbd kbd {
   font-family: inherit;
   font-size: 11px;
@@ -1007,13 +1030,79 @@ onUnmounted(() => {
   border-bottom-width: 2px;
   background: var(--surface-2);
 }
-
-.search-container:focus-within .search-kbd {
+.search-box:focus-within .search-kbd {
   opacity: 0;
 }
 
-/* 主题切换 */
-.theme-toggle-btn {
+/* ── 顶栏右侧 ── */
+.head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.clock {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  padding-right: 14px;
+  border-right: 1px solid var(--line);
+}
+.c-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.c-time {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.4px;
+}
+.c-date {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.2px;
+}
+.c-wx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+  white-space: nowrap;
+  cursor: default;
+}
+.c-wx-top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.wx-ico {
+  display: inline-flex;
+  color: var(--accent);
+}
+.wx-ico :deep(svg) {
+  width: 17px;
+  height: 17px;
+}
+.c-temp {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+.c-city {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  letter-spacing: 0.2px;
+}
+
+.icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1027,29 +1116,16 @@ onUnmounted(() => {
   cursor: pointer;
   transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
 }
-
-.theme-toggle-btn:hover {
+.icon-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-soft);
 }
-
-/* 移动端菜单按钮 */
-.mobile-menu-btn {
+.mobile-only {
   display: none;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--ink-2);
-  cursor: pointer;
-  flex-shrink: 0;
 }
 
-/* ── 移动端抽屉 ── */
+/* ── 移动抽屉 ── */
 .mobile-menu {
   position: fixed;
   top: 0;
@@ -1065,49 +1141,28 @@ onUnmounted(() => {
   transition: right 0.28s cubic-bezier(0.22, 0.7, 0.3, 1);
   overflow: hidden;
 }
-
 .mobile-menu.active {
   right: 0;
 }
-
 .mobile-menu-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 16px;
+  padding: 16px;
   background: linear-gradient(180deg, var(--sidebar-top), var(--sidebar));
   color: #fff;
   flex-shrink: 0;
 }
-
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
 .mobile-menu-header h3 {
   margin: 0;
   font-size: 15.5px;
   font-weight: 600;
 }
-
-.header-github-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  /* 原图是深色剪影，压在深色抽屉头部需要反白才看得见 */
-  filter: brightness(0) invert(1);
-  opacity: 0.5;
-  transition: opacity 0.16s ease, transform 0.16s ease;
-}
-
-.header-github-icon:hover {
-  opacity: 1;
-  transform: scale(1.06);
-}
-
 .close-btn {
   display: flex;
   align-items: center;
@@ -1123,11 +1178,9 @@ onUnmounted(() => {
   cursor: pointer;
   transition: background-color 0.16s ease;
 }
-
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.18);
 }
-
 .mobile-category-list {
   list-style: none;
   flex: 1;
@@ -1135,53 +1188,39 @@ onUnmounted(() => {
   padding: 8px;
   overflow-y: auto;
 }
-
 .mobile-category-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 12px;
+  gap: 11px;
+  padding: 11px 12px;
   border-radius: 10px;
   cursor: pointer;
+  color: var(--ink-1);
   transition: background-color 0.16s ease;
 }
-
-.mobile-category-item:hover {
+.mobile-category-item:active {
   background: var(--surface-2);
 }
-
-.mobile-category-item:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
 .mobile-category-item.active {
   background: var(--accent-soft);
 }
-
 .mobile-category-item.active .category-name {
   color: var(--accent);
   font-weight: 600;
 }
-
-.mobile-category-item .category-icon {
-  width: 26px;
-  height: 26px;
-  font-size: 15px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: var(--surface-2);
-  flex-shrink: 0;
-}
-
 .mobile-category-item .category-name {
+  flex: 1;
   font-size: 14.5px;
   font-weight: 500;
-  color: var(--ink-1);
 }
-
+.mobile-category-item .cat-ico {
+  width: 24px;
+  height: 24px;
+}
+.mobile-category-item .cat-ico :deep(svg) {
+  width: 18px;
+  height: 18px;
+}
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
@@ -1191,13 +1230,12 @@ onUnmounted(() => {
   visibility: hidden;
   transition: opacity 0.24s ease, visibility 0.24s ease;
 }
-
 .mobile-menu-overlay.active {
   opacity: 1;
   visibility: visible;
 }
 
-/* ── 内容区 ── */
+/* ── 内容 ── */
 .content-area {
   flex: 1;
   padding: 26px 28px 76px;
@@ -1205,16 +1243,13 @@ onUnmounted(() => {
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) transparent;
 }
-
 .content-area::-webkit-scrollbar {
   width: 8px;
 }
-
 .content-area::-webkit-scrollbar-thumb {
   background: var(--scroll-thumb);
   border-radius: 4px;
 }
-
 .content-area::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -1230,7 +1265,6 @@ onUnmounted(() => {
   color: var(--ink-2);
   font-size: 13.5px;
 }
-
 .loading-spinner {
   width: 26px;
   height: 26px;
@@ -1239,11 +1273,11 @@ onUnmounted(() => {
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
-
 .retry-btn {
   padding: 7px 16px;
   border: none;
@@ -1254,27 +1288,24 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-.retry-btn:hover {
-  background: var(--accent-hover);
-}
-
-/* 站内过滤空态 */
 .filter-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 260px;
+  gap: 12px;
+  min-height: 280px;
   color: var(--ink-2);
   font-size: 13.5px;
 }
-
 .filter-empty-icon {
-  font-size: 30px;
-  opacity: 0.7;
+  color: var(--ink-3);
+  opacity: 0.5;
 }
-
+.filter-empty-icon :deep(svg) {
+  width: 34px;
+  height: 34px;
+}
 .filter-clear-btn {
   padding: 7px 18px;
   border: 1px solid var(--line);
@@ -1285,7 +1316,6 @@ onUnmounted(() => {
   cursor: pointer;
   transition: border-color 0.16s ease, color 0.16s ease;
 }
-
 .filter-clear-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
@@ -1295,12 +1325,10 @@ onUnmounted(() => {
   max-width: 1320px;
   margin: 0 auto;
 }
-
 .category-section {
   margin-bottom: 34px;
   scroll-margin-top: 86px;
 }
-
 .category-title {
   display: flex;
   align-items: center;
@@ -1311,45 +1339,232 @@ onUnmounted(() => {
   letter-spacing: 0.2px;
   color: var(--ink-1);
 }
-
-.category-title .category-icon {
-  width: 27px;
-  height: 27px;
-  font-size: 14px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: var(--accent-soft);
-  flex-shrink: 0;
-}
-
 .category-title .category-name {
   flex: none;
   font-size: inherit;
   font-weight: inherit;
 }
-
-.cat-count {
-  margin-left: 2px;
-  padding: 2px 8px;
+.cat-relock {
+  margin-left: 4px;
+  padding: 2px 9px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  background: var(--surface);
   color: var(--ink-3);
-  white-space: nowrap;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+.cat-relock:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.cat-empty {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  text-align: center;
 }
 
-/* ── 卡片栅格 ── */
+/* ── 私密分类入口卡 ── */
+.vault {
+  max-width: 520px;
+}
+.vault-btn {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 15px 17px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 13px;
+  background: var(--surface-2);
+  color: var(--ink-1);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+.vault-btn:hover {
+  border-color: var(--accent);
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+.vault-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.vault-ico :deep(svg) {
+  width: 18px;
+  height: 18px;
+}
+.vault-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.vault-txt strong {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.vault-txt em {
+  font-size: 11.8px;
+  font-style: normal;
+  color: var(--ink-3);
+}
+.vault-go {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ── 解锁弹窗 ── */
+.vault-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+.vault-panel {
+  width: 100%;
+  max-width: 356px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.5);
+}
+.vp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 16px;
+}
+.vp-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.vp-ico :deep(svg) {
+  width: 17px;
+  height: 17px;
+}
+.vp-title {
+  flex: 1;
+  min-width: 0;
+}
+.vp-title h3 {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vp-title p {
+  margin: 0;
+  font-size: 11.8px;
+  color: var(--ink-3);
+}
+.vp-close {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+.vp-close:hover {
+  background: var(--surface-2);
+  color: var(--ink-1);
+}
+.vp-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--ink-1);
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.6px;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.vp-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.vp-err {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #e5484d;
+}
+.vp-submit {
+  width: 100%;
+  height: 42px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.16s ease;
+}
+.vp-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.vp-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vp-tip {
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+/* ── 卡片 ── */
 .sites-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
   gap: 12px;
 }
-
 .site-card {
   position: relative;
   display: flex;
@@ -1362,14 +1577,10 @@ onUnmounted(() => {
   color: inherit;
   text-decoration: none;
   overflow: hidden;
-  transition:
-    transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1),
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
   animation: cardIn 0.34s cubic-bezier(0.2, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--i, 0) * 16ms);
 }
-
 .site-card::after {
   content: '';
   position: absolute;
@@ -1381,26 +1592,21 @@ onUnmounted(() => {
   transition: opacity 0.2s ease;
   pointer-events: none;
 }
-
 .site-card:hover {
   transform: translateY(-3px);
   border-color: var(--accent);
   box-shadow: var(--card-shadow-hover);
 }
-
 .site-card:hover::after {
   opacity: 0.5;
 }
-
 .site-card:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-
 .site-card:active {
   transform: translateY(-1px);
 }
-
 @keyframes cardIn {
   from {
     opacity: 0;
@@ -1411,8 +1617,9 @@ onUnmounted(() => {
     transform: none;
   }
 }
-
 .site-icon {
+  position: relative;
+  z-index: 1;
   width: 38px;
   height: 38px;
   flex-shrink: 0;
@@ -1424,13 +1631,6 @@ onUnmounted(() => {
   border-radius: 10px;
   background: var(--surface-2);
 }
-
-.site-icon {
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-}
-
 .site-fallback {
   position: absolute;
   inset: 0;
@@ -1444,11 +1644,9 @@ onUnmounted(() => {
   user-select: none;
   transition: opacity 0.18s ease;
 }
-
 .site-icon.icon-loaded .site-fallback {
   opacity: 0;
 }
-
 .site-icon img {
   position: relative;
   z-index: 1;
@@ -1456,14 +1654,12 @@ onUnmounted(() => {
   height: 21px;
   object-fit: contain;
 }
-
 .site-info {
   position: relative;
   z-index: 1;
   flex: 1;
   min-width: 0;
 }
-
 .site-name {
   margin: 0 0 2px;
   font-size: 13.8px;
@@ -1474,7 +1670,6 @@ onUnmounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .site-description {
   margin: 0;
   font-size: 11.8px;
@@ -1485,7 +1680,7 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-/* ── 回到顶部 ── */
+/* ── 回到顶部 / 备案 ── */
 .back-top-btn {
   position: fixed;
   right: 24px;
@@ -1507,19 +1702,15 @@ onUnmounted(() => {
   transition: all 0.22s ease;
   z-index: 400;
 }
-
 .back-top-btn.show {
   opacity: 1;
   visibility: visible;
   transform: none;
 }
-
 .back-top-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
 }
-
-/* ── 备案 ── */
 .icp-footer {
   flex-shrink: 0;
   padding: 9px 20px;
@@ -1528,21 +1719,32 @@ onUnmounted(() => {
   text-align: center;
   font-size: 12px;
 }
-
 .icp-footer a {
   color: var(--ink-3);
   text-decoration: none;
-  transition: color 0.16s ease;
 }
-
 .icp-footer a:hover {
   color: var(--accent);
 }
 
 /* ── 响应式 ── */
+@media (max-width: 1180px) {
+  .c-wx .c-city {
+    display: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .sites-grid {
     grid-template-columns: repeat(auto-fill, minmax(206px, 1fr));
+  }
+  .search-header {
+    gap: 10px;
+    padding: 12px 18px;
+  }
+  .clock {
+    gap: 12px;
+    padding-right: 10px;
   }
 }
 
@@ -1553,63 +1755,89 @@ onUnmounted(() => {
     height: 100svh;
     overflow: hidden;
   }
-
   .sidebar {
     display: none;
   }
-
   .main-content {
     flex: 1;
     height: 100vh;
     height: 100svh;
     overflow: hidden;
   }
-
   .search-header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    padding: 10px 14px;
+    padding: 9px 12px;
     gap: 8px;
   }
-
-  .search-container {
+  .search-box {
     max-width: none;
     height: 42px;
     margin: 0;
+    padding: 0 8px 0 9px;
+    gap: 7px;
   }
-
+  .s-ico,
   .search-kbd {
     display: none;
   }
-
-  .theme-toggle-btn,
-  .mobile-menu-btn {
-    width: 36px;
-    height: 36px;
+  .eng-chip {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11.5px;
   }
-
-  .content-area {
-    padding: 14px 14px 72px;
-    padding-top: 76px;
-    -webkit-overflow-scrolling: touch;
+  .search-input {
+    font-size: 13.5px;
   }
-
-  .mobile-menu-btn {
+  .head-right {
+    gap: 6px;
+  }
+  .clock {
+    gap: 0;
+    padding-right: 8px;
+  }
+  .c-time {
+    font-size: 13px;
+  }
+  .c-date,
+  .c-wx {
+    display: none;
+  }
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+  .mobile-only {
     display: flex;
   }
-
+  .content-area {
+    padding: 14px 14px 72px;
+    padding-top: 70px;
+    -webkit-overflow-scrolling: touch;
+  }
   .category-section {
     margin-bottom: 26px;
-    scroll-margin-top: 70px;
+    scroll-margin-top: 60px;
   }
-
+  .category-title {
+    font-size: 14.5px;
+    margin-bottom: 11px;
+  }
+  .cat-ico.lg {
+    width: 24px;
+    height: 24px;
+  }
+  .cat-ico.lg :deep(svg) {
+    width: 14px;
+    height: 14px;
+  }
   .sites-grid {
     grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
     gap: 9px;
   }
-
   .site-card {
     flex-direction: column;
     align-items: center;
@@ -1618,23 +1846,18 @@ onUnmounted(() => {
     border-radius: 12px;
     text-align: center;
   }
-
   .site-icon {
     width: 34px;
     height: 34px;
-    margin: 0;
     border-radius: 9px;
   }
-
   .site-icon img {
     width: 19px;
     height: 19px;
   }
-
   .site-info {
     width: 100%;
   }
-
   .site-name {
     font-size: 12.5px;
     display: -webkit-box;
@@ -1645,10 +1868,9 @@ onUnmounted(() => {
     word-break: break-word;
     line-height: 1.4;
   }
-
   .site-description {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     white-space: normal;
@@ -1656,19 +1878,19 @@ onUnmounted(() => {
     line-height: 1.38;
     font-size: 11px;
   }
-
-  .category-title {
-    font-size: 14.5px;
-    margin-bottom: 11px;
+  .vault {
+    max-width: none;
   }
-
+  .vault-btn {
+    padding: 13px 14px;
+    gap: 11px;
+  }
+  .vault-go {
+    display: none;
+  }
   .back-top-btn {
     right: 16px;
     bottom: 18px;
-  }
-
-  .icp-footer {
-    padding: 8px 14px;
   }
 }
 
@@ -1686,5 +1908,4 @@ onUnmounted(() => {
     transform: none;
   }
 }
-
 </style>

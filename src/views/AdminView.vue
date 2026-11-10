@@ -126,6 +126,8 @@ import SiteManager from '../components/admin/SiteManager.vue'
 import SystemSettings from '../components/admin/SystemSettings.vue'
 import CustomDialog from '../components/admin/CustomDialog.vue'
 import { useGitHubAPI, setAuthToken, clearAuthToken } from '../apis/useGitHubAPI.js'
+import { sealJson } from '../utils/secret.js'
+import { vaultSession } from '../utils/vaultSession.js'
 
 const router = useRouter()
 const { saveCategoriesToGitHub, loadCategoriesFromGitHub } = useGitHubAPI()
@@ -346,21 +348,44 @@ const saveToGitHub = async () => {
       console.warn('加载当前数据失败，使用默认值:', error)
     }
 
-    // 保存完整的数据结构，保留 search 字段
+    // 私密分类：内存里可能因为「解锁编辑」躺着明文站点，
+    // 这里统一用会话口令重新加密后再写文件（深拷贝，不动界面上的数据）
+    const cats = JSON.parse(JSON.stringify(categories.value || []))
+    let sealedCount = 0
+    for (const c of cats) {
+      if (!c.private) continue
+      const sites = c.sites || []
+      if (!sites.length) continue
+
+      const pwd = vaultSession.get(c.id)
+      if (!pwd) {
+        throw new Error(
+          `分类「${c.name}」有 ${sites.length} 个明文站点，但没有可用口令，无法加密。` +
+          '请编辑该分类、输入口令解锁后再保存。'
+        )
+      }
+      c.lock = await sealJson({ sites }, pwd)
+      c.count = sites.length
+      c.sites = []
+      sealedCount++
+    }
+
+    // 展开 currentData 保留 search / footer / 以后新增的字段，只覆盖这两个
     await saveCategoriesToGitHub({
-      categories: categories.value,
-      title: navTitle.value,
-      search: currentData.search || 'bing'  // 保留搜索引擎设置
+      ...currentData,
+      categories: cats,
+      title: navTitle.value
     })
     showDialog(
       'success',
       '🎉 保存成功',
       '您的更改已成功保存到GitHub仓库！',
       [
+        sealedCount ? `• 已重新加密 ${sealedCount} 个私密分类（站点不会以明文进仓库）` : '',
         '• 更改将在 2-3 分钟内自动部署到线上',
         '• 部署完成后，您可以在前台页面看到最新内容',
         '• 如有问题，请检查Vercel或CFpage是否触发自动部署'
-      ]
+      ].filter(Boolean)
     )
   } catch (error) {
     showDialog(

@@ -33,6 +33,9 @@
   --ink-3: #94a3b8;
   /* 线条 / 描边 */
   --line: #e7ebf2;
+  --border-strong: #d5dce8;
+  /* 输入类控件底色（主题无关，跟随表面） */
+  --field: #f7f9fc;
   /* 强调色（全站唯一主色） */
   --accent: #3b82f6;
   --accent-hover: #2563eb;
@@ -73,6 +76,8 @@
   --ink-2: #9ca3af;
   --ink-3: #6b7280;
   --line: #26324a;
+  --border-strong: #35435c;
+  --field: #1d2839;
   --accent: #3b82f6;
   --accent-hover: #60a5fa;
   --accent-soft: rgba(59, 130, 246, 0.2);

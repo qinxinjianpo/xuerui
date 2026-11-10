@@ -85,6 +85,37 @@
           <p class="setting-description">当前搜索引擎: {{ searchEngineOptions.find(opt => opt.value === currentSearchEngine)?.label || '未设置' }}</p>
         </div>
 
+        <!-- 侧边栏底部链接 -->
+        <div class="setting-group">
+          <label>侧边栏底部链接:</label>
+          <div class="footer-edit">
+            <input
+              v-model="footerText"
+              type="text"
+              placeholder="显示文字，例如：愿逐月华流照君"
+              class="footer-input"
+              maxlength="24"
+            >
+            <input
+              v-model="footerUrl"
+              type="text"
+              placeholder="链接地址，例如：https://blog.example.com/（留空则只显示文字，不可点）"
+              class="footer-input wide"
+            >
+            <button
+              @click="saveFooterToGitHub"
+              :disabled="footerSaving"
+              class="save-footer-btn"
+            >
+              {{ footerSaving ? '保存中...' : '💾 保存链接' }}
+            </button>
+          </div>
+          <p class="setting-description">
+            当前：{{ currentFooter.text || '（未设置）' }}
+            <template v-if="currentFooter.url"> → {{ currentFooter.url }}</template>
+          </p>
+        </div>
+
         <!-- Logo设置 -->
         <div class="setting-group">
           <label>网站Logo:</label>
@@ -304,12 +335,17 @@ const currentSearchEngine = ref('bing')
 const searchEngineSaving = ref(false)
 
 // 搜索引擎选项
+// 前台只留这两个（胶囊切换），多给选项也没用
 const searchEngineOptions = [
-  { value: 'google', label: 'Google' },
-  { value: 'baidu', label: '百度' },
   { value: 'bing', label: 'Bing' },
-  { value: 'duckduckgo', label: 'DuckDuckGo' }
+  { value: 'baidu', label: '百度' }
 ]
+
+// 页脚链接
+const footerText = ref('')
+const footerUrl = ref('')
+const currentFooter = ref({ text: '', url: '' })
+const footerSaving = ref(false)
 
 // Logo设置
 const logoFileInput = ref(null)
@@ -380,8 +416,14 @@ const loadWebsiteSettings = async () => {
     websiteTitle.value = currentTitle.value
 
     // 加载搜索引擎设置
-    currentSearchEngine.value = data.search || 'bing'
+    currentSearchEngine.value = ['bing', 'baidu'].includes(data.search) ? data.search : 'bing'
     searchEngine.value = currentSearchEngine.value
+
+    // 加载页脚链接
+    const f = data.footer || {}
+    currentFooter.value = { text: f.text || '', url: f.url || '' }
+    footerText.value = currentFooter.value.text
+    footerUrl.value = currentFooter.value.url
   } catch (error) {
     console.error('加载网站设置失败:', error)
     currentTitle.value = '猫猫导航'
@@ -435,6 +477,38 @@ const saveTitleToGitHub = async () => {
     )
   } finally {
     titleSaving.value = false
+  }
+}
+
+// 保存页脚链接到GitHub
+const saveFooterToGitHub = async () => {
+  const text = footerText.value.trim()
+  const url = footerUrl.value.trim()
+
+  if (!text) {
+    showDialog('error', '❌ 输入错误', '链接文字不能为空', [])
+    return
+  }
+  if (url && !/^https?:\/\//i.test(url)) {
+    showDialog('error', '❌ 地址格式不对', '链接需要以 http:// 或 https:// 开头', [])
+    return
+  }
+
+  footerSaving.value = true
+  try {
+    const data = await loadCategoriesFromGitHub()
+    data.footer = { text, url }
+    await saveCategoriesToGitHub(data)
+
+    currentFooter.value = { text, url }
+    showDialog('success', '🎉 链接已保存', '重新部署后前台会更新', [
+      `• 文字：${text}`,
+      `• 地址：${url || '（不设链接，只显示文字）'}`
+    ])
+  } catch (error) {
+    showDialog('error', '❌ 保存失败', error.message, [])
+  } finally {
+    footerSaving.value = false
   }
 }
 
@@ -1114,5 +1188,53 @@ onMounted(() => {
   .logo-upload-controls {
     align-items: center;
   }
+}
+
+/* ── 页脚链接编辑 ── */
+.footer-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.footer-input {
+  flex: 1 1 160px;
+  min-width: 140px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dfe4ea;
+  border-radius: 6px;
+  background: #fff;
+  color: #2c3e50;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.footer-input:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, .12);
+}
+.footer-input.wide {
+  flex: 2 1 260px;
+}
+.save-footer-btn {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 6px;
+  background: #3498db;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+.save-footer-btn:hover:not(:disabled) {
+  background: #2980b9;
+}
+.save-footer-btn:disabled {
+  background: #bdc3c7;
+  cursor: default;
 }
 </style>

@@ -3,7 +3,7 @@ export const mockData = {
     {
       "id": "my-favorites",
       "name": "我的常用",
-      "icon": "💥",
+      "icon": "star",
       "order": 0,
       "sites": [
         {
@@ -31,7 +31,7 @@ export const mockData = {
     },
     {
       "id": "category-1780807732815",
-      "icon": "📖",
+      "icon": "book",
       "name": "阅读资源",
       "order": 1,
       "sites": [
@@ -60,7 +60,7 @@ export const mockData = {
     },
     {
       "id": "category-1775281075542",
-      "icon": "🎬",
+      "icon": "film",
       "name": "影视资源",
       "order": 2,
       "sites": [
@@ -82,7 +82,7 @@ export const mockData = {
     },
     {
       "id": "category-1775270594689",
-      "icon": "🎵",
+      "icon": "music",
       "name": "音乐资源",
       "order": 3,
       "sites": [
@@ -132,7 +132,7 @@ export const mockData = {
     },
     {
       "id": "category-1785662246210",
-      "icon": "🎮",
+      "icon": "gamepad",
       "name": "游戏资源",
       "order": 4,
       "sites": [
@@ -154,7 +154,7 @@ export const mockData = {
     },
     {
       "id": "category-1775272084261",
-      "icon": "🌐",
+      "icon": "cloud",
       "name": "网盘资源",
       "order": 5,
       "sites": [
@@ -184,7 +184,7 @@ export const mockData = {
     {
       "id": "cloud",
       "name": "代码学习",
-      "icon": "🧰",
+      "icon": "code",
       "order": 6,
       "sites": [
         {
@@ -268,7 +268,7 @@ export const mockData = {
     },
     {
       "id": "category-1775272572539",
-      "icon": "📐",
+      "icon": "grad",
       "name": "义务教育",
       "order": 7,
       "sites": [
@@ -304,7 +304,7 @@ export const mockData = {
     },
     {
       "id": "category-1775380230027",
-      "icon": "🧰",
+      "icon": "briefcase",
       "name": "办公学习",
       "order": 8,
       "sites": [
@@ -368,7 +368,7 @@ export const mockData = {
     },
     {
       "id": "category-1775381237467",
-      "icon": "🎨",
+      "icon": "bulb",
       "name": "有点意思",
       "order": 9,
       "sites": [
@@ -390,7 +390,7 @@ export const mockData = {
     },
     {
       "id": "category-1789023175530",
-      "icon": "📈",
+      "icon": "chart",
       "name": "投资金融",
       "order": 10,
       "sites": [
@@ -412,7 +412,7 @@ export const mockData = {
     },
     {
       "id": "category-1780751961419",
-      "icon": "🧭",
+      "icon": "home",
       "name": "生活常用",
       "order": 11,
       "sites": [
@@ -427,5 +427,9 @@ export const mockData = {
     }
   ],
   "title": "琴心剑魄。",
-  "search": "bing"
+  "search": "bing",
+  "footer": {
+    "text": "愿逐月华流照君",
+    "url": "https://blog.sherry.dpdns.org/"
+  }
 }
