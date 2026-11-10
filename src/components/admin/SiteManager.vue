@@ -235,7 +235,16 @@ const formData = ref({
 })
 
 // 监听props变化
+// 注意：syncToParent 之后父组件的 categories 会被替换成「刚 emit 出去的同一份数据」，
+// 如果这里无条件回写，就会把手上的编辑（比如刚解锁回来的私密站点）冲掉。
+// 所以 emit 时打个标记，父组件回传的同批次数据直接跳过。
+let skipNextSync = false
+
 watch(() => props.categories, (newCategories) => {
+  if (skipNextSync) {
+    skipNextSync = false
+    return
+  }
   localCategories.value = JSON.parse(JSON.stringify(newCategories))
 }, { immediate: true, deep: true })
 
@@ -248,6 +257,7 @@ watch(() => props.initialSelectedCategoryId, (newCategoryId) => {
 
 // 手动同步到父组件的函数，避免无限循环
 const syncToParent = () => {
+  skipNextSync = true
   emit('update', localCategories.value)
 }
 

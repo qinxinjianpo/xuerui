@@ -37,12 +37,14 @@
                 <div class="drag-handle" title="拖拽排序" @click.stop>
                   ⋮⋮
                 </div>
-                <span class="category-icon" @click.stop="editCategory(category)">
-                  {{ category.icon }}
-                </span>
+                <span class="category-icon" @click.stop="editCategory(category)" v-html="iconSvg(category.icon)"></span>
                 <div class="category-details">
-                  <h3 @click.stop="editCategory(category)">{{ category.name }}</h3>
-                  <p>{{ category.sites?.length || 0 }} 个站点 → 点击查看站点管理</p>
+                  <h3 @click.stop="editCategory(category)">
+                    {{ category.name }}
+                    <span v-if="category.private && category.lock" class="lock-badge">🔒 已加密</span>
+                  </h3>
+                  <p v-if="category.private && category.lock">{{ category.count || 0 }} 个站点（已加密，不随源码公开）</p>
+                  <p v-else>{{ category.sites?.length || 0 }} 个站点 → 点击查看站点管理</p>
                 </div>
               </div>
               <div class="category-actions">
@@ -87,23 +89,23 @@
 
         <form @submit.prevent="saveCategory" class="category-form">
           <div class="form-group">
-            <label>分类图标:</label>
-            <div class="icon-input">
-              <input
-                v-model="formData.icon"
-                placeholder="输入emoji图标"
-                class="form-input icon-preview"
-              >
-              <div class="emoji-suggestions">
-                <span
-                  v-for="emoji in emojiSuggestions"
-                  :key="emoji"
-                  @click="formData.icon = emoji"
-                  class="emoji-item"
-                >
-                  {{ emoji }}
-                </span>
-              </div>
+            <label>分类图标：<span class="picked-name">{{ iconLabel(formData.icon) }}</span></label>
+            <div class="icon-picker">
+              <template v-for="group in ICON_GROUPS" :key="group.name">
+                <p class="ip-group">{{ group.name }}</p>
+                <div class="ip-grid">
+                  <button
+                    v-for="[key, label] in group.icons"
+                    :key="key"
+                    type="button"
+                    class="ip-cell"
+                    :class="{ active: formData.icon === key }"
+                    :title="label"
+                    @click="formData.icon = key"
+                    v-html="iconSvg(key)"
+                  ></button>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -128,10 +130,51 @@
             >
           </div>
 
+          <!-- 私密分类 -->
+          <div class="form-group priv-block">
+            <label class="priv-toggle">
+              <input type="checkbox" v-model="formData.private" :disabled="isLockedEditing" />
+              <span>设为私密分类（站点加密，不随源码公开）</span>
+            </label>
+
+            <div v-if="formData.private" class="priv-body">
+              <p v-if="isLockedEditing" class="priv-hint unlock-hint">
+                此分类已加密。要增删站点，先输原口令解锁，解锁后去「站点管理」就能看到这些站点；只改名称 / 图标 / 排序可以直接保存。
+              </p>
+
+              <div class="priv-pwd-row">
+                <input
+                  v-model="formData.pwd"
+                  type="password"
+                  :placeholder="isLockedEditing ? '输入原口令（可留空）' : '设置口令（至少 6 位）'"
+                  autocomplete="new-password"
+                  :disabled="unlockedOnce"
+                  class="form-input"
+                />
+                <button
+                  v-if="isLockedEditing && !unlockedOnce"
+                  type="button"
+                  class="unlock-inline-btn"
+                  :disabled="unlocking"
+                  @click="unlockForEdit"
+                >{{ unlocking ? '验证中…' : '解锁' }}</button>
+              </div>
+
+              <p v-if="unlockedOnce" class="priv-hint ok-hint">
+                已解锁 · 站点已恢复显示（去站点管理可增删）。保存时会用同一口令自动重新加密，不会以明文写入仓库。
+              </p>
+              <p v-else class="priv-hint">
+                口令不保存、不上传，忘了就再也解不开。建议记在密码管理器里。
+              </p>
+
+              <p v-if="privError" class="priv-error">{{ privError }}</p>
+            </div>
+          </div>
+
           <div class="form-actions">
             <button type="button" @click="closeModal" class="cancel-btn">取消</button>
-            <button type="submit" class="submit-btn">
-              {{ editingCategory ? '更新' : '添加' }}
+            <button type="submit" class="submit-btn" :disabled="saving">
+              {{ saving ? '保存中…' : (editingCategory ? '更新' : '添加') }}
             </button>
           </div>
         </form>
@@ -141,8 +184,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
+import { iconSvg, iconKey, ICON_GROUPS, ICON_LIST } from '../../utils/icons.js'
+import { sealJson, openSealed, isSealed } from '../../utils/secret.js'
+import { vaultSession } from '../../utils/vaultSession.js'
 
 const props = defineProps({
   categories: {
@@ -166,40 +212,42 @@ const editingCategory = ref(null)
 
 // 表单数据
 const formData = ref({
-  icon: '📁',
+  icon: 'folder',
   name: '',
-  order: 0
+  order: 0,
+  private: false,
+  pwd: ''
 })
 
-// Emoji建议
-const emojiSuggestions = [
-  // 综合 / 常用
-  '⭐', '🔖', '🏠', '📌', '✨',
-  // 工具 / 开发
-  '🛠️', '🔧', '⚙️', '🧰', '💻', '🖥️', '🐙', '🧩', '⌨️',
-  // 设计 / 创作
-  '🎨', '🖌️', '🖼️', '✏️', '📐',
-  // 学习 / 文档
-  '📚', '📖', '📝', '📓', '📄',
-  // 影音 / 媒体
-  '🎵', '🎬', '📺', '🎮', '🎧',
-  // 社交 / 通讯
-  '👥', '💬', '📱', '📷', '💌',
-  // 网络 / 云
-  '🌐', '☁️', '🔗', '📡',
-  // 信息 / 数据
-  '🔍', '📰', '📊', '📈', '🧭',
-  // 生活 / 其他
-  '🛒', '💼', '🚀', '🔒', '🛡️', '🤖'
-]
+// 加密分类的编辑态：解锁后拿到站点，保存时用同一口令重新加密
+const unlockedSites = ref(null)
+const unlockedOnce = ref(false)
+const unlocking = ref(false)
+const privError = ref('')
+const saving = ref(false)
+
+const isLockedEditing = computed(
+  () => !!editingCategory.value?.lock && isSealed(editingCategory.value.lock)
+)
+
+const iconLabel = (key) => ICON_LIST.find((i) => i.key === key)?.label || '文件夹'
 
 // 监听props变化
+// 与 SiteManager 同理：syncToParent 之后父组件会把同一份数据回传，
+// 无条件回写会冲掉刚写进去的解锁站点，所以 emit 后跳过同批次回写。
+let skipNextSync = false
+
 watch(() => props.categories, (newCategories) => {
+  if (skipNextSync) {
+    skipNextSync = false
+    return
+  }
   localCategories.value = JSON.parse(JSON.stringify(newCategories))
 }, { immediate: true, deep: true })
 
 // 手动同步到父组件的函数，避免无限循环
 const syncToParent = () => {
+  skipNextSync = true
   emit('update', localCategories.value)
 }
 
@@ -228,10 +276,15 @@ const onDragEnd = () => {
 const editCategory = (category) => {
   editingCategory.value = category
   formData.value = {
-    icon: category.icon,
+    icon: iconKey(category.icon),
     name: category.name,
-    order: category.order
+    order: category.order,
+    private: !!category.private,
+    pwd: ''
   }
+  unlockedSites.value = null
+  unlockedOnce.value = false
+  privError.value = ''
 }
 
 // 删除分类
@@ -243,28 +296,111 @@ const deleteCategory = (categoryId) => {
 }
 
 // 保存分类
-const saveCategory = () => {
-  if (editingCategory.value) {
-    // 更新现有分类
-    const index = localCategories.value.findIndex(cat => cat.id === editingCategory.value.id)
-    if (index !== -1) {
-      localCategories.value[index] = {
-        ...localCategories.value[index],
-        ...formData.value
+const saveCategory = async () => {
+  privError.value = ''
+
+  const editing = editingCategory.value
+  let target
+  if (editing) {
+    const idx = localCategories.value.findIndex((cat) => cat.id === editing.id)
+    target = { ...localCategories.value[idx] }
+  } else {
+    target = { id: `category-${Date.now()}`, sites: [] }
+  }
+
+  target.icon = formData.value.icon || 'folder'
+  target.name = formData.value.name
+  target.order = formData.value.order
+
+  if (formData.value.private) {
+    target.private = true
+
+    // 已解锁 → 用解出来的站点；否则沿用现有站点（新分类为空）
+    const sites = unlockedSites.value !== null ? unlockedSites.value : (target.sites || [])
+
+    if (formData.value.pwd) {
+      if (formData.value.pwd.length < 6) {
+        privError.value = '口令至少 6 位'
+        return
       }
+      saving.value = true
+      try {
+        target.lock = await sealJson({ sites }, formData.value.pwd)
+        target.count = sites.length
+        // 已解锁的不用清空：内存里留着明文，站点管理才能继续编辑，
+        // 最终写文件时由 AdminView.saveToGitHub 统一加密并置空。
+        if (unlockedSites.value === null) target.sites = []
+        else target.sites = JSON.parse(JSON.stringify(sites))
+      } catch (e) {
+        privError.value = e.message || '加密失败'
+        return
+      } finally {
+        saving.value = false
+      }
+    } else if (target.lock) {
+      // 只改了名字/图标/排序：密文里只存站点，不需要重新加密
+      if (unlockedSites.value !== null) {
+        privError.value = '已解锁但没填口令，无法重新加密。请填写口令后再保存。'
+        return
+      }
+    } else {
+      privError.value = '设为私密必须设置口令'
+      return
     }
   } else {
-    // 添加新分类
-    const newCategory = {
-      id: `category-${Date.now()}`,
-      ...formData.value,
-      sites: []
+    // 取消私密：必须已解锁，否则站点会丢
+    if (target.lock) {
+      if (unlockedSites.value === null) {
+        privError.value = '取消私密需要先输入原口令解锁，否则站点内容会丢失'
+        return
+      }
+      target.sites = unlockedSites.value
     }
-    localCategories.value.push(newCategory)
+    delete target.private
+    delete target.lock
+    delete target.count
+    vaultSession.forget(target.id)
+  }
+
+  if (editing) {
+    const idx = localCategories.value.findIndex((cat) => cat.id === editing.id)
+    if (idx !== -1) localCategories.value[idx] = target
+  } else {
+    localCategories.value.push(target)
   }
 
   syncToParent()
   closeModal()
+}
+
+// 编辑已加密分类时，先用原口令把站点解出来
+const unlockForEdit = async () => {
+  const cat = editingCategory.value
+  if (!cat || !formData.value.pwd) {
+    privError.value = '请输入这个分类的原口令'
+    return
+  }
+  unlocking.value = true
+  privError.value = ''
+  try {
+    const data = await openSealed(cat.lock, formData.value.pwd)
+    const sites = Array.isArray(data?.sites) ? data.sites : []
+    unlockedSites.value = sites
+    unlockedOnce.value = true
+
+    // 记住口令 + 把站点写回列表，站点管理页就能直接增删
+    vaultSession.remember(cat.id, formData.value.pwd)
+    const idx = localCategories.value.findIndex((c) => c.id === cat.id)
+    if (idx !== -1) {
+      localCategories.value[idx].sites = JSON.parse(JSON.stringify(sites))
+      // 同步一次，让「站点管理」tab 拿到解锁后的站点
+      syncToParent()
+    }
+  } catch {
+    privError.value = '口令不对，或者密文已损坏'
+  } finally {
+    unlocking.value = false
+  }
 }
 
 // 关闭弹窗
@@ -272,10 +408,16 @@ const closeModal = () => {
   showAddModal.value = false
   editingCategory.value = null
   formData.value = {
-    icon: '📁',
+    icon: 'folder',
     name: '',
-    order: localCategories.value.length
+    order: localCategories.value.length,
+    private: false,
+    pwd: ''
   }
+  unlockedSites.value = null
+  unlockedOnce.value = false
+  privError.value = ''
+  saving.value = false
 }
 
 // 处理图片错误
@@ -718,5 +860,163 @@ const handleImageError = (event) => {
   .sites-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
+}
+
+/* ── 图标选择器 ── */
+.picked-name {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #3498db;
+}
+.icon-picker {
+  max-height: 236px;
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+.ip-group {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 10px -2px 5px;
+  padding: 3px 2px;
+  background: #f8f9fa;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  color: #95a5a6;
+}
+.ip-group:first-child {
+  margin-top: 0;
+}
+.ip-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 5px;
+}
+.ip-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: #fff;
+  color: #4a5b6b;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.ip-cell :deep(svg) {
+  width: 18px;
+  height: 18px;
+}
+.ip-cell :deep(.soft) {
+  opacity: .45;
+}
+.ip-cell:hover {
+  border-color: #aed6f1;
+  background: #ebf5fb;
+  color: #2980b9;
+}
+.ip-cell.active {
+  border-color: #3498db;
+  background: #ebf5fb;
+  color: #2980b9;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, .16);
+}
+
+/* ── 列表里的加密徽标 ── */
+.lock-badge {
+  margin-left: 7px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fdf3e3;
+  border: 1px solid #f0d9a8;
+  color: #a9761b;
+  font-size: 11px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* ── 私密分类表单 ── */
+.priv-block {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e6ea;
+}
+.priv-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #2c3e50;
+  cursor: pointer;
+}
+.priv-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #3498db;
+  cursor: pointer;
+}
+.priv-body {
+  margin-top: 11px;
+  padding: 12px 13px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+.priv-pwd-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.priv-pwd-row .form-input {
+  flex: 1;
+  margin: 0;
+}
+.unlock-inline-btn {
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 6px;
+  background: #3498db;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .2s ease;
+}
+.unlock-inline-btn:hover:not(:disabled) {
+  background: #2980b9;
+}
+.unlock-inline-btn:disabled {
+  background: #bdc3c7;
+  cursor: default;
+}
+.priv-hint {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: #7f8c8d;
+}
+.priv-hint.unlock-hint {
+  margin: 0 0 10px;
+  color: #a9761b;
+}
+.priv-hint.ok-hint {
+  color: #27ae60;
+  font-weight: 500;
+}
+.priv-error {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  color: #e74c3c;
 }
 </style>
