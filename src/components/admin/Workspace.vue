@@ -1134,11 +1134,6 @@ const confirmPwd = async () => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.row-sep {
-  flex-shrink: 0;
-  color: var(--ink-3);
-  font-size: 12px;
-}
 .row-name-input {
   flex: 1;
   min-width: 0;

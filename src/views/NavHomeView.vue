@@ -27,29 +27,7 @@
     <!-- 左侧边栏 -->
     <aside class="sidebar">
       <div class="logo-section">
-        <img
-          v-if="logo && !logoBroken"
-          class="logo logo-img"
-          :src="logo"
-          alt=""
-          @error="logoBroken = true"
-        />
-        <svg v-else class="logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="navLogoGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#6f9bf5" />
-              <stop offset="1" stop-color="#3b6fd8" />
-            </linearGradient>
-            <mask id="navLogoMask">
-              <rect width="48" height="48" fill="#000" />
-              <circle cx="23" cy="25" r="9.2" fill="#fff" />
-              <circle cx="27.6" cy="21" r="7.6" fill="#000" />
-            </mask>
-          </defs>
-          <rect width="48" height="48" rx="14" fill="url(#navLogoGrad)" />
-          <rect width="48" height="48" rx="14" fill="#fff" opacity=".95" mask="url(#navLogoMask)" />
-          <circle cx="35.4" cy="13.6" r="1.7" fill="#fff" opacity=".85" />
-        </svg>
+        <BrandLogo :src="logo" class="logo" />
         <h1 class="site-title">{{ title || '导航' }}</h1>
       </div>
 
@@ -116,22 +94,7 @@
       <header class="search-header">
         <div class="head-wrap">
           <div class="m-brand mobile-only">
-            <img v-if="logo && !logoBroken" :src="logo" alt="" @error="logoBroken = true" />
-            <svg v-else viewBox="0 0 48 48" fill="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="mLogoGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#6f9bf5" />
-                  <stop offset="1" stop-color="#3b6fd8" />
-                </linearGradient>
-                <mask id="mLogoMask">
-                  <rect width="48" height="48" fill="#000" />
-                  <circle cx="23" cy="25" r="9.2" fill="#fff" />
-                  <circle cx="27.6" cy="21" r="7.6" fill="#000" />
-                </mask>
-              </defs>
-              <rect width="48" height="48" rx="14" fill="url(#mLogoGrad)" />
-              <rect width="48" height="48" rx="14" fill="#fff" opacity=".95" mask="url(#mLogoMask)" />
-            </svg>
+            <BrandLogo :src="logo" />
           </div>
           <div class="search-box">
           <span class="s-ico">
@@ -333,6 +296,7 @@
                   <div class="site-icon">
                     <span class="site-fallback" :style="{ background: fallbackColor(site.name) }">{{ fallbackLetter(site.name) }}</span>
                     <img
+                      v-if="site.icon"
                       :src="site.icon"
                       :alt="site.name"
                       loading="lazy"
@@ -405,9 +369,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useNavigation } from '@/apis/useNavigation.js'
-import { useThemeStore } from '@/stores/counter.js'
+import BrandLogo from '@/components/BrandLogo.vue'
+import { useThemeStore } from '@/stores/theme.js'
 import { iconSvg } from '@/utils/icons.js'
 import { fetchWeather, weatherIcon, weatherText, WEATHER_LOCATION } from '@/utils/weather.js'
 import { fetchQuote, FALLBACK_QUOTE } from '@/utils/quote.js'
@@ -415,9 +380,6 @@ import { isSealed, openSealed } from '@/utils/secret.js'
 
 const { categories, title, footer, icpNumber, logo, defaultSearchEngine, loading, error, fetchCategories } = useNavigation()
 
-// 后台传过 Logo 就用图片，图片挂了或没设置就退回内置 SVG
-const logoBroken = ref(false)
-watch(logo, () => { logoBroken.value = false })
 const themeStore = useThemeStore()
 
 const loc = WEATHER_LOCATION
@@ -519,7 +481,7 @@ const wxText = computed(() => (weather.value ? weatherText(weather.value.code) :
 const weatherTitle = computed(() => {
   const w = weather.value
   if (!w) return ''
-  return `${wxText.value}　${w.low}° ~ ${w.high}°　体感 ${w.feels}°　湿度 ${w.humidity}%　风速 ${w.wind} km/h`
+  return `${wxText.value} · ${w.low}° ~ ${w.high}° · 体感 ${w.feels}° · 湿度 ${w.humidity}% · 风速 ${w.wind} km/h`
 })
 
 const loadWeather = async () => {
@@ -874,11 +836,8 @@ onUnmounted(() => {
   height: 34px;
   border-radius: 10px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px -4px rgba(59, 130, 246, 0.55);
-}
-.logo-img {
   object-fit: cover;
-  background: #fff;
+  box-shadow: 0 4px 12px -4px rgba(11, 21, 36, 0.5);
 }
 .site-title {
   margin: 0;

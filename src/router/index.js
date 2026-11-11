@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import NavHomeView from '../views/NavHomeView.vue'
-import TestView from '../views/TestView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,38 +7,21 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: NavHomeView,
+      component: NavHomeView
     },
     {
       path: '/admin',
       name: 'admin',
       component: () => import('../views/AdminView.vue'),
-      meta: {
-        title: '管理后台 - 猫猫导航',
-        requiresAuth: true
-      }
-    },
-    {
-      path: '/test',
-      name: 'test',
-      component: TestView,
-      meta: {
-        title: '环境变量测试 - 猫猫导航'
-      }
-    },
-  ],
+      meta: { title: '管理后台' }
+    }
+  ]
 })
 
-// 路由前置守卫
-router.beforeEach((to, from, next) => {
-  // 设置页面标题
-  if (to.meta?.title) {
-    document.title = to.meta.title
-  } else {
-    document.title = '猫猫导航'
-  }
-
-  next()
+// 只给声明了 meta.title 的页面写标题；首页标题由 useNavigation 按后台配置写入，
+// 这里不做兜底，避免路由跳转的一瞬间闪出写死的站点名
+router.beforeEach((to) => {
+  if (to.meta?.title) document.title = to.meta.title
 })
 
 export default router

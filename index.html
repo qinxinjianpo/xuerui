@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="alternate icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="琴心剑魄的个人导航站：常用站点、阅读影视音乐资源一站直达">
     <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
@@ -10,7 +12,7 @@
     <title>Sherry 导航</title>
     <script>
       /* 主题防闪色：在 bundle 加载前根据 localStorage / 系统偏好挂 dark 类，
-         逻辑与 src/stores/counter.js 的 useThemeStore 保持一致 */
+         逻辑与 src/stores/theme.js 的 useThemeStore 保持一致 */
       (function () {
         var t = localStorage.getItem('theme');
         var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -31,13 +33,6 @@
         width: 56px;
         height: 56px;
         border-radius: 14px;
-        background: #1e293b;
-        color: #fff;
-        font-size: 26px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         animation: boot-pulse 1.6s ease-in-out infinite;
       }
       @keyframes boot-pulse {
@@ -51,7 +46,7 @@
   </head>
   <body>
     <div id="app">
-      <div class="boot-skeleton"><div class="boot-logo">琴</div></div>
+      <div class="boot-skeleton"><img class="boot-logo" src="/logo.png" alt=""></div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

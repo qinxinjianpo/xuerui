@@ -69,13 +69,3 @@ export async function openSealed(payload, password) {
   const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct)
   return JSON.parse(dec.decode(plain))
 }
-
-/** 用某口令试解一次，只判断对不对 */
-export async function verifySealed(payload, password) {
-  try {
-    await openSealed(payload, password)
-    return true
-  } catch {
-    return false
-  }
-}

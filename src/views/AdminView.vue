@@ -4,7 +4,7 @@
     <div v-if="!ready" class="login">
       <form class="login-card" @submit.prevent="doLogin">
         <div class="login-logo">
-          <UiIcon name="sparkles" :size="24" />
+          <BrandLogo :src="settingsModel.logo" />
         </div>
         <h1>导航站管理</h1>
         <p class="login-sub">输入管理密钥进入后台</p>
@@ -36,7 +36,7 @@
       <header class="bar">
         <div class="bar-inner">
           <div class="brand">
-            <span class="brand-ico"><UiIcon name="settings" :size="17" /></span>
+            <span class="brand-ico"><BrandLogo :src="settingsModel.logo" /></span>
             <span class="brand-txt">导航站管理</span>
             <span v-if="dirty" class="brand-dot" title="有未保存的改动">未保存</span>
           </div>
@@ -105,12 +105,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { mockData } from '../mock/mock_data.js'
 import { useGitHubAPI, setAuthToken, clearAuthToken } from '../apis/useGitHubAPI.js'
 import { useWorkspace } from '../utils/workspace.js'
 
+import BrandLogo from '../components/BrandLogo.vue'
 import UiIcon from '../components/admin/UiIcon.vue'
 import Workspace from '../components/admin/Workspace.vue'
 import Settings from '../components/admin/Settings.vue'
@@ -220,9 +221,9 @@ const save = async () => {
     // 先拿仓库现有数据，保留我们不管的字段
     let carry = {}
     try {
-      const cur = await loadCategoriesFromGitHub()
-      const { _fileSha, ...rest } = cur || {}
-      carry = rest
+      const cur = (await loadCategoriesFromGitHub()) || {}
+      carry = { ...cur }
+      delete carry._fileSha
     } catch {
       carry = {}
     }
@@ -318,15 +319,19 @@ onMounted(() => {
   text-align: center;
 }
 .login-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 52px;
   height: 52px;
   margin: 0 auto 16px;
   border-radius: 15px;
-  background: linear-gradient(140deg, #6f9bf5, #3b6fd8);
-  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 8px 20px -8px rgba(11, 21, 36, 0.5);
+}
+.login-logo :deep(img),
+.login-logo :deep(svg) {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 .login-card h1 {
   margin: 0 0 6px;
@@ -436,14 +441,17 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .brand-ico {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: linear-gradient(140deg, #6f9bf5, #3b6fd8);
-  color: #fff;
+  overflow: hidden;
+}
+.brand-ico :deep(img),
+.brand-ico :deep(svg) {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 .brand-txt {
   font-size: 14px;

@@ -10,7 +10,7 @@ const ENDPOINT = 'https://v1.hitokoto.cn/?c=i&encode=json'
 const TIMEOUT = 5000
 
 // 兜底句：接口不通时至少还有一句可看
-export const FALLBACKS = [
+const FALLBACKS = [
   { text: '愿逐月华流照君。', from: '张若虚《春江花月夜》' },
   { text: '山中何事？松花酿酒，春水煎茶。', from: '张可久《人月圆》' },
   { text: '人生如逆旅，我亦是行人。', from: '苏轼《临江仙》' },
@@ -21,7 +21,7 @@ export const FALLBACKS = [
 export const FALLBACK_QUOTE = FALLBACKS[0]
 
 /** 随机取一句兜底，尽量避免和当前这句重复 */
-export function pickFallback(exclude = '') {
+function pickFallback(exclude = '') {
   const pool = FALLBACKS.filter((q) => q.text !== exclude)
   const list = pool.length ? pool : FALLBACKS
   return list[Math.floor(Math.random() * list.length)]

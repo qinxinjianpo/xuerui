@@ -1,18 +1,18 @@
 {
   "name": "mao_nav",
   "version": "2.0.0",
-  "description": "🐱 一个简洁美观的个人导航网站，支持分类管理和自定义收藏夹",
+  "description": "一个简洁美观的个人导航站，支持分类管理、站点拖拽与私密分类加密",
   "private": false,
   "type": "module",
-  "author": "Your Name <your.email@example.com>",
+  "author": "qinxinjianpo",
   "license": "MIT",
-  "homepage": "https://github.com/your-username/mao_nav#readme",
+  "homepage": "https://sherry.dpdns.org/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/mao_nav.git"
+    "url": "git+https://github.com/qinxinjianpo/xuerui.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/mao_nav/issues"
+    "url": "https://github.com/qinxinjianpo/xuerui/issues"
   },
   "keywords": [
     "navigation",

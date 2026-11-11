@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { sealJson, openSealed, isSealed } from './secret.js'
 import { vaultSession } from './vaultSession.js'
 
@@ -56,10 +56,6 @@ export function useWorkspace(initial) {
     return (cat.sites || []).length
   }
 
-  const totalSites = computed(() =>
-    categories.value.reduce((sum, c) => sum + siteCount(c), 0)
-  )
-
   const addCategory = (name = '新分类') => {
     const cat = {
       id: makeId('category'),
@@ -77,15 +73,6 @@ export function useWorkspace(initial) {
     categories.value = categories.value.filter((c) => c.id !== id)
     unlocked.value.delete(id)
     vaultSession.forget(id)
-    renumber()
-    touch()
-  }
-
-  const moveCategory = (from, to) => {
-    if (from === to || to < 0 || to >= categories.value.length) return
-    const list = categories.value
-    const [item] = list.splice(from, 1)
-    list.splice(to, 0, item)
     renumber()
     touch()
   }
@@ -251,8 +238,6 @@ export function useWorkspace(initial) {
   return {
     categories,
     dirty,
-    unlocked,
-    totalSites,
     touch,
     reload,
     findCategory,
@@ -260,7 +245,6 @@ export function useWorkspace(initial) {
     siteCount,
     addCategory,
     removeCategory,
-    moveCategory,
     addSite,
     removeSite,
     moveSite,

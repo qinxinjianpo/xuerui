@@ -49,7 +49,7 @@ function codeText(code) {
 /* 与分类图标同一套风格：24 网格、细描边、圆头 */
 const STROKE = 'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"'
 
-export const WEATHER_SVG = {
+const WEATHER_SVG = {
   sun: `<svg viewBox="0 0 24 24" ${STROKE}><circle cx="12" cy="12" r="4.1"/><path d="M12 2.8v2.3M12 18.9v2.3M2.8 12h2.3M18.9 12h2.3M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/></svg>`,
   night: `<svg viewBox="0 0 24 24" ${STROKE}><path d="M20.2 15.1A8.3 8.3 0 019.4 4.3a8.4 8.4 0 1010.8 10.8z"/><path d="M16.6 3.4l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/></svg>`,
   partly: `<svg viewBox="0 0 24 24" ${STROKE}><circle cx="8.6" cy="8.4" r="3.3"/><path d="M8.6 2.9v1.7M3.1 8.4h1.7M4.7 4.5l1.2 1.2M12.5 4.5l-1.2 1.2"/><path d="M9.6 19.6h7.2a3.1 3.1 0 00.4-6.18 4.75 4.75 0 00-8.92 1.1 2.55 2.55 0 001.32 5.08z"/></svg>`,

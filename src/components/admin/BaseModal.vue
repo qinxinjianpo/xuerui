@@ -1,31 +1,38 @@
 <template>
-  <transition name="md">
-    <div class="md-mask" @click.self="$emit('close')" @keydown.esc="$emit('close')">
-      <div class="md-box" role="dialog" aria-modal="true" :aria-label="title">
-        <header class="md-head">
-          <h3>{{ title }}</h3>
-          <button type="button" class="md-x" aria-label="关闭" @click="$emit('close')">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </header>
-        <div class="md-body">
-          <slot />
-        </div>
-        <footer v-if="$slots.footer" class="md-foot">
-          <slot name="footer" />
-        </footer>
+  <div class="md-mask" @click.self="emit('close')">
+    <div class="md-box" role="dialog" aria-modal="true" :aria-label="title">
+      <header class="md-head">
+        <h3>{{ title }}</h3>
+        <button type="button" class="md-x" aria-label="关闭" @click="emit('close')">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </header>
+      <div class="md-body">
+        <slot />
       </div>
+      <footer v-if="$slots.footer" class="md-foot">
+        <slot name="footer" />
+      </footer>
     </div>
-  </transition>
+  </div>
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
+
 defineProps({
   title: { type: String, default: '' }
 })
-defineEmits(['close'])
+const emit = defineEmits(['close'])
+
+// 弹窗挂在 body 外的层级，Esc 靠 window 监听才收得到
+const onKeydown = (e) => {
+  if (e.key === 'Escape') emit('close')
+}
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>
@@ -96,20 +103,17 @@ defineEmits(['close'])
   border-top: 1px solid var(--line);
 }
 
-.md-enter-active,
-.md-leave-active {
-  transition: opacity 0.16s ease;
+@keyframes md-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.md-enter-active .md-box,
-.md-leave-active .md-box {
-  transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.3, 1);
+@keyframes md-box-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to { opacity: 1; transform: none; }
 }
-.md-enter-from,
-.md-leave-to {
-  opacity: 0;
-}
-.md-enter-from .md-box,
-.md-leave-to .md-box {
-  transform: translateY(8px) scale(0.97);
+.md-mask { animation: md-in 0.16s ease-out; }
+.md-box { animation: md-box-in 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .md-mask, .md-box { animation: none; }
 }
 </style>

@@ -76,8 +76,7 @@ export const mockData = {
           "id": "site-1775270711257",
           "name": "alger music",
           "url": "https://mc.alger.fun/",
-          "description": "绑定网易云的音乐软件。",
-          "icon": "/sitelogo/mc.alger.fun.ico"
+          "description": "绑定网易云的音乐软件。"
         },
         {
           "id": "site-1775270856187",

@@ -9,7 +9,7 @@
  */
 
 /** key → 路径。class="soft" = 辅助线（淡） */
-export const ICON_PATHS = {
+const ICON_PATHS = {
   /* ── 常用 / 生活 ── */
   home: '<path d="M3.8 10.6L12 3.9l8.2 6.7"/><path d="M6 9.7v10.1h12V9.7"/><path class="soft" d="M9.9 19.8v-5.4h4.2v5.4"/>',
   star: '<path d="M12 3.4l2.7 5.5 6 .87-4.35 4.24 1.03 6L12 17.03l-5.38 2.8 1.03-6L3.3 9.77l6-.87z"/>',
@@ -138,11 +138,6 @@ export const ICON_GROUPS = [
   }
 ]
 
-/** 后台选择器直接遍历的扁平列表 */
-export const ICON_LIST = ICON_GROUPS.flatMap((g) =>
-  g.icons.map(([key, label]) => ({ key, label, group: g.name, path: ICON_PATHS[key] }))
-)
-
 /** 老数据用的是 emoji，这里做一次映射，避免历史分类全变成缺省图标 */
 const EMOJI_MAP = {
   '💥': 'sparkles',
@@ -225,7 +220,7 @@ const EMOJI_MAP = {
  * 把分类里存的原始值（新 key / 老 emoji / 空）统一成可用的图标 key。
  * 认不出来的一律回落到 folder，保证界面上永远有图标。
  */
-export function iconKey(raw) {
+function iconKey(raw) {
   if (!raw) return 'folder'
   const v = String(raw).trim()
   if (ICON_PATHS[v]) return v
