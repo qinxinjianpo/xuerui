@@ -363,6 +363,13 @@ export const mockData = {
           "url": "https://www.ppbzy.com/",
           "description": "专注与放松的白噪音",
           "icon": "https://www.faviconextractor.com/favicon/www.ppbzy.com"
+        },
+        {
+          "id": "site-1794671103329-1",
+          "name": "江山时序",
+          "url": "https://deanchen.me/jiangshan-map/",
+          "description": "中国历史地图时间轴",
+          "icon": ""
         }
       ]
     },
